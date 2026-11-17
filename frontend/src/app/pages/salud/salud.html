@@ -1,0 +1,36 @@
+<main>
+  <h1>Dispositivos Inteligentes para Bebés</h1>
+  <p class="sub">Estado del sistema (pantalla provisional)</p>
+
+  <button (click)="revisar()" [disabled]="cargando()">
+    {{ cargando() ? 'Revisando…' : 'Volver a revisar' }}
+  </button>
+
+  @if (error()) {
+    <p class="mal">{{ error() }}</p>
+  }
+
+  @if (datos(); as d) {
+    <ul>
+      <li><span>Backend</span> <strong class="bien">ok</strong></li>
+      <li><span>Supabase</span> <strong [class]="d.supabase === 'ok' ? 'bien' : 'mal'">{{ d.supabase }}</strong></li>
+      <li><span>Telegram</span> <strong [class]="d.telegram.startsWith('ok') ? 'bien' : 'mal'">{{ d.telegram }}</strong></li>
+      <li><span>MQTT (clientes conectados)</span> <strong>{{ d.mqtt.clientesConectados }}</strong></li>
+    </ul>
+
+    <h2>Dispositivos vistos por el broker</h2>
+    @for (disp of d.mqtt.dispositivos; track disp.codigo) {
+      <div class="disp">
+        <span>{{ disp.codigo }}</span>
+        <strong [class]="disp.online ? 'bien' : 'mal'">{{ disp.online ? 'en línea' : 'fuera de línea' }}</strong>
+      </div>
+    } @empty {
+      <p>Ninguno todavía. ¿Está corriendo el simulador?</p>
+    }
+
+    <details>
+      <summary>Respuesta completa</summary>
+      <pre>{{ d | json }}</pre>
+    </details>
+  }
+</main>

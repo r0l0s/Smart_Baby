@@ -1,0 +1,12 @@
+{
+  "name": "smartbaby",
+  "private": true,
+  "description": "Dispositivos Inteligentes para Bebés — monorepo (backend + frontend + simulador)",
+  "scripts": {
+    "postinstall": "npm --prefix backend install && npm --prefix frontend install && npm --prefix simulator install",
+    "dev": "concurrently -k -n backend,frontend,simulador -c blue,magenta,green \"npm --prefix backend run dev\" \"npm --prefix frontend start\" \"npm --prefix simulator run dev\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
