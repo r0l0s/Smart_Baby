@@ -80,10 +80,10 @@ export async function finalizarMonitoreo(dispositivoId) {
 
 /**
  * Guarda una o varias lecturas. Cada una: { tipo, valor, unidad?, ts? }.
- * Se asocian al monitoreo activo del dispositivo (si hay). Devuelve las filas guardadas.
+ * Se asocian al monitoreo indicado (o al activo, si no se indica). Devuelve las filas guardadas.
  */
-export async function guardarLecturas(dispositivo, lecturas) {
-  const monitoreo = await monitoreoActivo(dispositivo.id);
+export async function guardarLecturas(dispositivo, lecturas, monitoreo) {
+  if (monitoreo === undefined) monitoreo = await monitoreoActivo(dispositivo.id);
   const filas = lecturas
     .filter((l) => TIPOS_LECTURA.has(l?.tipo) && Number.isFinite(Number(l.valor)))
     .map((l) => ({

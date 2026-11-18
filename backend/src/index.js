@@ -10,6 +10,7 @@ import authRouter from './routes/auth.js';
 import notificacionesRouter from './routes/notificaciones.js';
 import dispositivosRouter from './routes/dispositivos.js';
 import { requiereSesion } from './middleware/auth.js';
+import { iniciarConsultaPeriodica } from './services/cuna.js';
 
 if (!config.jwtSecret) {
   console.error('[api] Falta JWT_SECRET en backend/.env — no se puede iniciar sesión sin él');
@@ -32,6 +33,7 @@ app.use(manejarErrores);
 
 await iniciarBroker(config.mqttPort);
 iniciarBot();
+iniciarConsultaPeriodica(); // cuna: pide datos cada INTERVALO_CUNA_SEG (10 s en demo)
 prepararStorage().catch((err) => console.error('[supabase]', err.message));
 
 app.listen(config.port, '0.0.0.0', () => {

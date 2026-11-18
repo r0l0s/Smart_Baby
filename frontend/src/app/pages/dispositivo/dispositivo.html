@@ -27,7 +27,7 @@
     <section class="tarjeta-seccion">
       <h2>Controles</h2>
       @switch (d.tipo) {
-        @case ('cuna') { <p class="pendiente">Activar/desactivar monitoreo — HU-CUN-01.</p> }
+        @case ('cuna') { <app-controles-cuna [dispositivo]="d" (cambio)="cargar()" /> }
         @case ('colchon') { <p class="pendiente">Activar/desactivar monitoreo de peso — HU-COL-01 / HU-COL-03.</p> }
         @case ('seguridad') { <p class="pendiente">Activar/desactivar el sistema — HU-SEG-01.</p> }
         @case ('biberon') { <p class="pendiente">Medir temperatura de la leche — HU-ALI-01.</p> }

@@ -1,5 +1,5 @@
 // Middleware que exige un JWT válido en el encabezado "Authorization: Bearer <token>".
-// Si es válido, deja en req.usuario = { id, ambiente_id, rol } para que las rutas
+// Si es válido, deja en req.usuario = { id, ambiente_id, rol, nombre } para que las rutas
 // filtren siempre por el ambiente del usuario (RNF-08).
 import jwt from 'jsonwebtoken';
 import { config } from '../config.js';
@@ -29,7 +29,7 @@ export async function requiereSesion(req, res, next) {
   // Confirmar que el usuario todavía existe (por si se borró desde Supabase).
   const { data: usuario, error } = await supabase
     .from('usuarios')
-    .select('id, ambiente_id, rol')
+    .select('id, ambiente_id, rol, nombre')
     .eq('id', datos.sub)
     .maybeSingle();
   if (error) return next(error);

@@ -7,6 +7,7 @@ import { Dispositivo, DispositivosService, TipoDispositivo, infoTipo } from '../
 import { Encabezado } from '../../shared/encabezado';
 import { GraficasMonitoreo, SerieGrafica } from '../../shared/graficas-monitoreo';
 import { HistorialEventos } from '../../shared/historial-eventos';
+import { ControlesCuna } from './controles-cuna';
 
 const INTERVALO_MS = 3000;
 
@@ -44,7 +45,7 @@ const ETIQUETAS: Record<string, { texto: string; unidad?: string }> = {
 
 @Component({
   selector: 'app-dispositivo',
-  imports: [Encabezado, GraficasMonitoreo, HistorialEventos],
+  imports: [Encabezado, GraficasMonitoreo, HistorialEventos, ControlesCuna],
   templateUrl: './dispositivo.html',
   styleUrl: './dispositivo.css',
 })
@@ -67,7 +68,7 @@ export class DispositivoPagina implements OnInit {
     this.cargar(); // aquí el id de la URL ya está disponible
   }
 
-  private cargar() {
+  protected cargar() {
     this.servicio.obtener(this.id()).subscribe({
       next: (d) => {
         this.dispositivo.set(d);

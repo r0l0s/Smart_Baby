@@ -14,6 +14,10 @@ export interface Dispositivo {
   estado: Record<string, unknown>;
   configuracion: Record<string, unknown>;
   creado_en: string;
+  /** Solo en el detalle: monitoreo activo o null */
+  monitoreo?: { id: string; inicio: string; fin: string | null } | null;
+  /** Solo en el detalle: cada cuántos segundos se actualizan los datos */
+  intervalo_seg?: number;
 }
 
 export interface InfoTipo {

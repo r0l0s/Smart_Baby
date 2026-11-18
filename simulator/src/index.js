@@ -34,6 +34,15 @@ app.post('/api/dispositivos/:codigo/energia', (req, res) => {
   res.json({ ok: true });
 });
 
+// POST /api/dispositivos/:codigo/escenario  { escenario: "temp_alta" | "movimiento" | ... }
+app.post('/api/dispositivos/:codigo/escenario', (req, res) => {
+  const d = dispositivos.find((x) => x.codigo === req.params.codigo);
+  if (!d) return res.status(404).json({ error: 'No existe ese dispositivo' });
+  const mensaje = d.escenario(String(req.body?.escenario || ''));
+  console.log(`[${d.codigo}] escenario "${req.body?.escenario}": ${mensaje}`);
+  res.json({ mensaje });
+});
+
 app.listen(PANEL_PORT, '0.0.0.0', () => {
   console.log(`[simulador] Panel de control en http://localhost:${PANEL_PORT}`);
 });

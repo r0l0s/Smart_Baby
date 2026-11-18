@@ -8,32 +8,42 @@
     body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background: #f4f6fa; color: #1d2433; }
     h1 { font-size: 1.4rem; margin: 0 0 4px; }
     .sub { color: #5b6475; margin: 0 0 16px; }
-    .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+    .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
     .card { background: #fff; border-radius: 10px; padding: 12px 14px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
     .card h2 { font-size: 1.05rem; margin: 0 0 6px; display: flex; justify-content: space-between; align-items: center; }
     .badge { font-size: .75rem; padding: 2px 8px; border-radius: 999px; }
     .on { background: #d9f5e3; color: #146c2e; }
     .off { background: #fde2e1; color: #a1271f; }
+    .info { margin: 6px 0; font-size: .9rem; }
+    .info b { font-weight: 600; }
     pre { background: #f1f3f7; padding: 8px; border-radius: 6px; font-size: .8rem; margin: 6px 0 10px; white-space: pre-wrap; }
     .botones { display: flex; flex-wrap: wrap; gap: 6px; }
-    button { border: 1px solid #c6ccd8; background: #fff; border-radius: 6px; padding: 5px 9px; cursor: pointer; font-size: .85rem; }
+    button { border: 1px solid #c6ccd8; background: #fff; border-radius: 6px; padding: 6px 10px; cursor: pointer; font-size: .85rem; }
+    button:hover:not(:disabled) { border-color: #3b6fd8; }
     button:disabled { color: #9aa1ad; cursor: not-allowed; }
+    .msg { font-size: .8rem; color: #146c2e; min-height: 1em; margin-top: 6px; }
+    .alarma { color: #a1271f; font-weight: 700; }
   </style>
 </head>
 <body>
   <h1>Panel del simulador</h1>
-  <p class="sub">Estado de los dispositivos simulados. Se actualiza cada 2 segundos. Los botones de escenarios se activarán con cada historia de usuario.</p>
+  <p class="sub">Estado de los dispositivos simulados (se actualiza cada segundo) y botones para forzar escenarios.</p>
   <div class="grid" id="grid">Cargando…</div>
 
   <script>
-    // Escenarios por tipo (por ahora solo de muestra, deshabilitados).
+    // [texto del botón, nombre del escenario]. Escenarios sin implementar quedan deshabilitados.
     const escenarios = {
-      cuna: ['Subir temperatura', 'Bajar temperatura', 'Subir humedad', 'Bajar humedad', 'Movimiento'],
-      colchon: ['Quitar peso', 'Dejar caer peso'],
+      cuna: [
+        ['🌡️⬆ Subir temperatura', 'temp_alta'], ['🌡️⬇ Bajar temperatura', 'temp_baja'], ['🌡️ Temp. normal', 'temp_normal'],
+        ['💧⬆ Subir humedad', 'hum_alta'], ['💧⬇ Bajar humedad', 'hum_baja'], ['💧 Humedad normal', 'hum_normal'],
+        ['🏃 Movimiento', 'movimiento'],
+      ],
+      colchon: [['Quitar peso', null], ['Dejar caer peso', null]],
       matriz: [],
-      seguridad: ['Movimiento en el cuarto', 'Abrir puerta'],
-      biberon: ['Leche fría', 'Leche apta', 'Leche caliente'],
+      seguridad: [['Movimiento en el cuarto', null], ['Abrir puerta', null]],
+      biberon: [['Leche fría', null], ['Leche apta', null], ['Leche caliente', null]],
     };
+    const mensajes = {};
 
     async function refrescar() {
       try {
@@ -43,28 +53,39 @@
             <h2>${d.codigo}
               <span class="badge ${d.conectado ? 'on' : 'off'}">${d.conectado ? 'en línea' : d.apagado ? 'apagado' : 'desconectado'}</span>
             </h2>
-            ${d.estado.alarma ? '<strong style="color:#a1271f">🚨 ALARMA SONANDO</strong>' : ''}
+            ${d.estado.alarma ? '<div class="alarma">🚨 ALARMA SONANDO</div>' : ''}
+            ${Object.entries(d.info || {}).map(([k, v]) => `<div class="info"><b>${k}:</b> ${v}</div>`).join('')}
             <pre>${JSON.stringify(d.estado, null, 2)}</pre>
             <div class="botones">
               <button onclick="energia('${d.codigo}', ${d.apagado})">${d.apagado ? '🔌 Encender' : '⏻ Apagar'}</button>
-              ${(escenarios[d.tipo] || []).map((e) => `<button disabled title="Pendiente">${e}</button>`).join('')}
+              ${(escenarios[d.tipo] || []).map(([texto, esc]) => esc
+                ? `<button onclick="escenario('${d.codigo}', '${esc}')">${texto}</button>`
+                : `<button disabled title="Pendiente">${texto}</button>`).join('')}
             </div>
+            <div class="msg">${mensajes[d.codigo] || ''}</div>
           </div>`).join('');
       } catch {
         document.getElementById('grid').textContent = 'No se pudo contactar al simulador.';
       }
     }
+
     async function energia(codigo, encendido) {
       await fetch(`/api/dispositivos/${codigo}/energia`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ encendido }),
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ encendido }),
       });
       setTimeout(refrescar, 300);
     }
 
+    async function escenario(codigo, esc) {
+      const r = await fetch(`/api/dispositivos/${codigo}/escenario`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ escenario: esc }),
+      });
+      mensajes[codigo] = `${new Date().toLocaleTimeString()} · ${(await r.json()).mensaje}`;
+      refrescar();
+    }
+
     refrescar();
-    setInterval(refrescar, 2000);
+    setInterval(refrescar, 1000);
   </script>
 </body>
 </html>

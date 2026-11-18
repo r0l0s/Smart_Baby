@@ -11,7 +11,9 @@ import {
   disponibles,
   nombrePorDefecto,
 } from '../services/dispositivos.js';
-import { olvidarDispositivo } from '../services/registro.js';
+import { olvidarDispositivo, monitoreoActivo } from '../services/registro.js';
+import * as cuna from '../services/cuna.js';
+import { config } from '../config.js';
 
 const router = Router();
 
@@ -97,11 +99,37 @@ async function dispositivoDelAmbiente(req, res) {
   return data;
 }
 
-// GET /api/dispositivos/:id — un dispositivo del ambiente (pantalla dedicada)
+// GET /api/dispositivos/:id — un dispositivo del ambiente (pantalla dedicada).
+// Incluye el monitoreo activo (o null) y cada cuántos segundos se actualizan los datos.
 router.get('/:id', async (req, res, next) => {
   try {
     const d = await dispositivoDelAmbiente(req, res);
-    if (d) res.json(dispositivoPublico(d));
+    if (!d) return;
+    res.json({ ...dispositivoPublico(d), monitoreo: await monitoreoActivo(d.id), intervalo_seg: config.intervaloCunaSeg });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Servicios que saben activar/desactivar el monitoreo de cada tipo de dispositivo.
+const MONITOREO = { cuna };
+
+// POST /api/dispositivos/:id/monitoreo  { activo: true|false }  (HU-CUN-01)
+router.post('/:id/monitoreo', async (req, res, next) => {
+  try {
+    const d = await dispositivoDelAmbiente(req, res);
+    if (!d) return;
+    const servicio = MONITOREO[d.tipo];
+    if (!servicio) return res.status(400).json({ error: 'Este dispositivo no tiene monitoreo' });
+    const activar = req.body?.activo === true;
+
+    if (activar && !estadoEnVivo(d.codigo)?.online) {
+      return res.status(409).json({ error: 'El dispositivo está fuera de línea. Revisa que esté encendido.' });
+    }
+    const monitoreo = activar
+      ? await servicio.activarMonitoreo(d, req.usuario)
+      : await servicio.desactivarMonitoreo(d, req.usuario);
+    res.json({ monitoreo: activar ? monitoreo : null });
   } catch (err) {
     next(err);
   }

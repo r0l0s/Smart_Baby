@@ -79,7 +79,24 @@ export class DispositivoSimulado {
 
   // Lo que muestra el panel de control.
   resumen() {
-    return { codigo: this.codigo, tipo: this.tipo, conectado: this.conectado, apagado: !!this.apagado, estado: this.estado };
+    return {
+      codigo: this.codigo,
+      tipo: this.tipo,
+      conectado: this.conectado,
+      apagado: !!this.apagado,
+      estado: this.estado,
+      info: this.infoPanel(),
+    };
+  }
+
+  // Datos extra para el panel (cada tipo los reemplaza).
+  infoPanel() {
+    return {};
+  }
+
+  // Escenarios forzados desde el panel (cada tipo los reemplaza). Devuelve un texto corto.
+  escenario(nombre) {
+    return `Escenario "${nombre}" no disponible todavía`;
   }
 
   // Simula desenchufar el dispositivo: avisa "fuera de línea" y se desconecta.
