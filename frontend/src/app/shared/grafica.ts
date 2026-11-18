@@ -71,6 +71,10 @@ export class Grafica {
   protected opciones = computed<ChartConfiguration<'line'>['options']>(() => {
     const esPuntos = this.estilo() === 'puntos';
     const textoValor = this.textoValor();
+    // Se lee "puntos" a propósito: así, cada vez que llegan datos nuevos (cada 3 s con el
+    // monitoreo activo) se recalcula el final del eje X = ahora, y los puntos nuevos quedan visibles.
+    this.puntos();
+    const fin = this.hasta() ? new Date(this.hasta()!).getTime() : Date.now();
     return {
       responsive: true,
       maintainAspectRatio: false,
@@ -91,7 +95,7 @@ export class Grafica {
         x: {
           type: 'time',
           min: new Date(this.desde()).getTime(),
-          max: (this.hasta() ? new Date(this.hasta()!) : new Date()).getTime(),
+          max: fin,
           adapters: { date: { locale: es } },
           time: { displayFormats: { second: 'HH:mm:ss', minute: 'HH:mm', hour: 'dd/MM HH:mm', day: 'dd/MM' } },
           title: { display: true, text: 'Hora' },
