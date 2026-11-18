@@ -1,0 +1,21 @@
+.pasos { padding-left: 20px; line-height: 1.6; margin: 0 0 18px; }
+.qr { display: block; margin: 18px auto 0; width: 200px; height: 200px; }
+.esperando {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #5b6475;
+  margin-top: 16px;
+}
+.punto {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #3b6fd8;
+  animation: latido 1.2s ease-in-out infinite;
+}
+@keyframes latido {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 1; }
+}

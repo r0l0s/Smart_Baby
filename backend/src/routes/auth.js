@@ -5,6 +5,8 @@ import bcrypt from 'bcrypt';
 import { supabase } from '../db.js';
 import { normalizarTelefono, telefonoValido } from '../services/telefono.js';
 import { crearToken, requiereSesion } from '../middleware/auth.js';
+import { tokenVerificacion, enlaceBot } from '../services/tokensTelegram.js';
+import QRCode from 'qrcode';
 
 const router = Router();
 
@@ -123,6 +125,27 @@ router.get('/yo', requiereSesion, async (req, res, next) => {
     const { data: usuario, error } = await supabase.from('usuarios').select('*').eq('id', req.usuario.id).single();
     if (error) throw error;
     res.json({ usuario: usuarioPublico(usuario) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/auth/verificacion — estado de verificación con Telegram (HU-PLA-02).
+// Si aún no está verificado, incluye el enlace al bot (CA1) y su código QR para escanearlo
+// con el teléfono. La página web consulta esta ruta cada pocos segundos hasta que verificado = true.
+router.get('/verificacion', requiereSesion, async (req, res, next) => {
+  try {
+    const { data: usuario, error } = await supabase
+      .from('usuarios')
+      .select('verificado')
+      .eq('id', req.usuario.id)
+      .single();
+    if (error) throw error;
+    if (usuario.verificado) return res.json({ verificado: true });
+
+    const enlace = enlaceBot(await tokenVerificacion(req.usuario.id));
+    const qr = await QRCode.toDataURL(enlace, { margin: 1, width: 220 });
+    res.json({ verificado: false, enlace, qr });
   } catch (err) {
     next(err);
   }

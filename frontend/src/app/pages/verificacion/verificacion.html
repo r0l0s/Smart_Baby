@@ -1,0 +1,30 @@
+<div class="pantalla-centrada">
+  <div class="tarjeta">
+    <h1>Verifica tu teléfono</h1>
+    <p class="sub">Hola, {{ auth.usuario()?.nombre }}. Vincula tu cuenta con Telegram para recibir las alertas.</p>
+
+    @if (error()) {
+      <div class="alerta-error">{{ error() }}</div>
+    }
+
+    @if (estado(); as e) {
+      <ol class="pasos">
+        <li>Abre el bot de Telegram con el botón (o escanea el código con tu teléfono).</li>
+        <li>En Telegram toca <strong>Iniciar</strong>.</li>
+        <li>Toca <strong>📱 Compartir mi número</strong> y confirma.</li>
+      </ol>
+
+      <a class="boton" [href]="e.enlace" target="_blank" rel="noopener">Abrir Telegram</a>
+
+      @if (e.qr) {
+        <img class="qr" [src]="e.qr" alt="Código QR del enlace a Telegram">
+      }
+
+      <p class="esperando"><span class="punto"></span> Esperando la verificación…</p>
+    } @else if (!error()) {
+      <p>Cargando…</p>
+    }
+
+    <p class="pie"><a routerLink="/">Verificar más tarde</a></p>
+  </div>
+</div>

@@ -3,10 +3,29 @@
   <button class="salir" type="button" (click)="auth.logout()">Cerrar sesión</button>
 </header>
 
+@if (auth.usuario() && !auth.usuario()!.verificado) {
+  <!-- HU-PLA-02 CA4: recordatorio para cuentas sin verificar -->
+  <div class="aviso">
+    <span>⚠️ Tu teléfono no está verificado. No recibirás alertas por Telegram hasta que lo verifiques.</span>
+    <a routerLink="/verificacion">Verificar ahora</a>
+  </div>
+}
+
 <main>
   <h1>Hola, {{ auth.usuario()?.nombre }}</h1>
   <p class="sub">
     {{ auth.usuario()?.rol === 'invitado' ? 'Perfil invitado' : 'Usuario principal' }}
   </p>
   <p>Aquí aparecerán tus dispositivos.</p>
+
+  <section class="prueba">
+    <h2>Notificaciones</h2>
+    <p>Envía un mensaje de prueba por Telegram a todos los perfiles verificados del ambiente.</p>
+    <button class="boton secundario" type="button" (click)="enviarPrueba()" [disabled]="enviando()">
+      {{ enviando() ? 'Enviando…' : 'Enviar notificación de prueba' }}
+    </button>
+    @if (mensajePrueba()) {
+      <p class="resultado">{{ mensajePrueba() }}</p>
+    }
+  </section>
 </main>

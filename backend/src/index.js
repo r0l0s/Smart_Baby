@@ -7,6 +7,8 @@ import { iniciarBot, detenerBot } from './telegram/bot.js';
 import { manejarErrores } from './middleware/errores.js';
 import saludRouter from './routes/salud.js';
 import authRouter from './routes/auth.js';
+import notificacionesRouter from './routes/notificaciones.js';
+import { requiereSesion } from './middleware/auth.js';
 
 if (!config.jwtSecret) {
   console.error('[api] Falta JWT_SECRET en backend/.env — no se puede iniciar sesión sin él');
@@ -20,8 +22,8 @@ app.use(express.json());
 app.use('/api/salud', saludRouter);
 app.use('/api/auth', authRouter); // registro y login son públicos; /yo exige sesión
 
-// Todas las rutas que se agreguen debajo de esta línea exigen sesión (RNF-08):
-// app.use('/api/dispositivos', requiereSesion, dispositivosRouter);
+// Todas las rutas siguientes exigen sesión (RNF-08)
+app.use('/api/notificaciones', requiereSesion, notificacionesRouter);
 
 app.use('/api', (req, res) => res.status(404).json({ error: 'Ruta no encontrada' }));
 app.use(manejarErrores);
