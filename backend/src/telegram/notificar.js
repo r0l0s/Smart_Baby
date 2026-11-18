@@ -2,6 +2,23 @@
 import { bot } from './bot.js';
 import { supabase } from '../db.js';
 import { formatearFecha } from '../services/fechas.js';
+import { config } from '../config.js';
+
+// Sube una imagen (Buffer) a Telegram con el fetch nativo de Node.
+// No se usa telegraf para esto: su subida de archivos falla en Node 26 ("socket hang up").
+export async function enviarFotoArchivo(chatId, foto, texto) {
+  const esPng = foto.subarray(0, 4).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47]));
+  const formulario = new FormData();
+  formulario.append('chat_id', String(chatId));
+  formulario.append('caption', texto);
+  formulario.append('photo', new Blob([foto], { type: esPng ? 'image/png' : 'image/jpeg' }), esPng ? 'foto.png' : 'foto.jpg');
+  const respuesta = await fetch(`https://api.telegram.org/bot${config.telegramToken}/sendPhoto`, {
+    method: 'POST',
+    body: formulario,
+  });
+  const datos = await respuesta.json();
+  if (!datos.ok) throw new Error(datos.description);
+}
 
 /**
  * Arma el texto estándar de una notificación:
@@ -42,9 +59,10 @@ export async function notificarAmbiente(ambienteId, texto, foto) {
     await Promise.all(
       perfiles.map(async (p) => {
         try {
-          if (foto) {
-            const archivo = Buffer.isBuffer(foto) ? { source: foto } : foto;
-            await bot.telegram.sendPhoto(p.telegram_chat_id, archivo, { caption: texto });
+          if (Buffer.isBuffer(foto)) {
+            await enviarFotoArchivo(p.telegram_chat_id, foto, texto);
+          } else if (foto) {
+            await bot.telegram.sendPhoto(p.telegram_chat_id, foto, { caption: texto }); // foto = URL
           } else {
             await bot.telegram.sendMessage(p.telegram_chat_id, texto);
           }
