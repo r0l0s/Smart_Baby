@@ -1,0 +1,52 @@
+<app-encabezado titulo="Agregar dispositivo" [volver]="true" />
+
+<main>
+  @if (error()) {
+    <div class="alerta-error">❌ {{ error() }}</div>
+  }
+
+  @if (!tipoElegido()) {
+    <h1>1. ¿Qué dispositivo quieres agregar?</h1>
+    <div class="tipos">
+      @for (t of tipos; track t.tipo) {
+        <button type="button" class="tipo" (click)="elegirTipo(t)">
+          <span class="emoji">{{ t.emoji }}</span>
+          <span class="nombre">{{ t.nombre }}</span>
+          <span class="desc">{{ t.descripcion }}</span>
+        </button>
+      }
+    </div>
+  } @else {
+    <h1>2. Elige tu {{ tipoElegido()!.nombre.toLowerCase() }}</h1>
+    <p class="sub">
+      Enciende el dispositivo y asegúrate de que esté conectado al WiFi.
+      Aquí aparecen los que están en línea y todavía no se han vinculado.
+    </p>
+
+    @if (encontrados(); as lista) {
+      @if (lista.length) {
+        <ul class="encontrados">
+          @for (codigo of lista; track codigo) {
+            <li>
+              <span><span class="emoji">{{ tipoElegido()!.emoji }}</span> {{ codigo }}</span>
+              <button type="button" class="boton" (click)="vincular(codigo)" [disabled]="!!vinculando()">
+                {{ vinculando() === codigo ? 'Vinculando…' : 'Vincular' }}
+              </button>
+            </li>
+          }
+        </ul>
+      } @else {
+        <div class="buscando">
+          <span class="punto"></span>
+          No se encontraron dispositivos de este tipo en línea. Seguimos buscando…
+        </div>
+      }
+    } @else {
+      <div class="buscando"><span class="punto"></span> Buscando dispositivos…</div>
+    }
+
+    <button type="button" class="boton secundario cambiar" (click)="cambiarTipo()" [disabled]="!!vinculando()">
+      Elegir otro tipo
+    </button>
+  }
+</main>

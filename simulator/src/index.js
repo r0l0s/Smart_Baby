@@ -25,6 +25,15 @@ app.get('/api/dispositivos', (req, res) => {
   res.json(dispositivos.map((d) => d.resumen()));
 });
 
+// POST /api/dispositivos/:codigo/energia  { encendido: true|false }
+app.post('/api/dispositivos/:codigo/energia', (req, res) => {
+  const d = dispositivos.find((x) => x.codigo === req.params.codigo);
+  if (!d) return res.status(404).json({ error: 'No existe ese dispositivo' });
+  if (req.body?.encendido) d.encender();
+  else d.apagar();
+  res.json({ ok: true });
+});
+
 app.listen(PANEL_PORT, '0.0.0.0', () => {
   console.log(`[simulador] Panel de control en http://localhost:${PANEL_PORT}`);
 });

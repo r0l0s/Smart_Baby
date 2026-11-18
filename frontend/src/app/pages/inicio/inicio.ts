@@ -1,46 +1,41 @@
-// Pantalla principal. PROVISIONAL: los botones de dispositivos y perfil llegan en HU-PLA-04.
-import { Component, inject, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+// Pantalla principal (HU-PLA-04): botones Agregar dispositivo y Perfil + un botón por dispositivo.
+import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
+import { Dispositivo, DispositivosService, infoTipo } from '../../core/dispositivos';
+import { Encabezado } from '../../shared/encabezado';
+
+const INTERVALO_MS = 5000; // refresca el estado en línea/fuera de línea
 
 @Component({
   selector: 'app-inicio',
-  imports: [RouterLink],
+  imports: [RouterLink, Encabezado],
   templateUrl: './inicio.html',
   styleUrl: './inicio.css',
 })
 export class Inicio {
   protected auth = inject(AuthService);
-  private http = inject(HttpClient);
+  private servicio = inject(DispositivosService);
 
-  protected mensajePrueba = signal('');
-  protected enviando = signal(false);
+  protected dispositivos = signal<Dispositivo[] | null>(null);
+  protected error = signal('');
+  protected infoTipo = infoTipo;
 
   constructor() {
-    // Actualiza nombre/estado y confirma que la sesión sigue siendo válida
-    // (si no, el interceptor cierra la sesión y manda a /login).
+    // Actualiza nombre/verificación y confirma que la sesión sigue siendo válida.
     this.auth.refrescarUsuario().subscribe({ error: () => {} });
+    this.cargar();
+    const temporizador = setInterval(() => this.cargar(), INTERVALO_MS);
+    inject(DestroyRef).onDestroy(() => clearInterval(temporizador));
   }
 
-  // HU-TRN-03: manda una notificación de prueba a todos los perfiles verificados del ambiente.
-  enviarPrueba() {
-    this.enviando.set(true);
-    this.mensajePrueba.set('');
-    this.http.post<{ enviados: number; fallidos: number }>('/api/notificaciones/prueba', {}).subscribe({
-      next: (r) => {
-        this.enviando.set(false);
-        this.mensajePrueba.set(
-          r.enviados === 0
-            ? 'No hay perfiles verificados en este ambiente: no se envió nada.'
-            : `Notificación enviada a ${r.enviados} perfil(es) verificado(s).` +
-                (r.fallidos ? ` ${r.fallidos} no se pudieron enviar.` : ''),
-        );
+  private cargar() {
+    this.servicio.listar().subscribe({
+      next: (lista) => {
+        this.dispositivos.set(lista);
+        this.error.set('');
       },
-      error: () => {
-        this.enviando.set(false);
-        this.mensajePrueba.set('No se pudo enviar la notificación.');
-      },
+      error: () => this.error.set('No se pudieron cargar los dispositivos.'),
     });
   }
 }

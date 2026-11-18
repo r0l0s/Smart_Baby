@@ -15,6 +15,8 @@ export class DispositivoSimulado {
   }
 
   conectar(url) {
+    this.url = url;
+    this.apagado = false;
     this.cliente = mqtt.connect(url, {
       clientId: this.codigo,
       reconnectPeriod: 2000,
@@ -34,7 +36,7 @@ export class DispositivoSimulado {
       this.publicarEstado();
     });
     this.cliente.on('close', () => {
-      if (this.conectado) console.log(`[${this.codigo}] desconectado, reintentando...`);
+      if (this.conectado && !this.apagado) console.log(`[${this.codigo}] desconectado, reintentando...`);
       this.conectado = false;
     });
     this.cliente.on('error', (err) => {
@@ -77,7 +79,26 @@ export class DispositivoSimulado {
 
   // Lo que muestra el panel de control.
   resumen() {
-    return { codigo: this.codigo, tipo: this.tipo, conectado: this.conectado, estado: this.estado };
+    return { codigo: this.codigo, tipo: this.tipo, conectado: this.conectado, apagado: !!this.apagado, estado: this.estado };
+  }
+
+  // Simula desenchufar el dispositivo: avisa "fuera de línea" y se desconecta.
+  apagar() {
+    if (this.apagado || !this.cliente) return;
+    this.apagado = true;
+    const mensaje = JSON.stringify({ tipo: this.tipo, online: false });
+    this.cliente.publish(this.topico('estado'), mensaje, { qos: 1, retain: true }, () => {
+      this.cliente.end();
+      this.conectado = false;
+      console.log(`[${this.codigo}] apagado desde el panel`);
+    });
+  }
+
+  // Vuelve a "enchufarlo".
+  encender() {
+    if (!this.apagado) return;
+    console.log(`[${this.codigo}] encendido desde el panel`);
+    this.conectar(this.url);
   }
 
   desconectar() {

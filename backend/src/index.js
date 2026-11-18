@@ -8,6 +8,7 @@ import { manejarErrores } from './middleware/errores.js';
 import saludRouter from './routes/salud.js';
 import authRouter from './routes/auth.js';
 import notificacionesRouter from './routes/notificaciones.js';
+import dispositivosRouter from './routes/dispositivos.js';
 import { requiereSesion } from './middleware/auth.js';
 
 if (!config.jwtSecret) {
@@ -24,6 +25,7 @@ app.use('/api/auth', authRouter); // registro y login son públicos; /yo exige s
 
 // Todas las rutas siguientes exigen sesión (RNF-08)
 app.use('/api/notificaciones', requiereSesion, notificacionesRouter);
+app.use('/api/dispositivos', requiereSesion, dispositivosRouter);
 
 app.use('/api', (req, res) => res.status(404).json({ error: 'Ruta no encontrada' }));
 app.use(manejarErrores);

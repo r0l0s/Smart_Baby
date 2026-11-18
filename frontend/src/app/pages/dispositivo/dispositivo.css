@@ -1,0 +1,32 @@
+main { max-width: 900px; margin: 0 auto; padding: 16px; }
+.cabecera { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+.cabecera .emoji { font-size: 2.6rem; }
+h1 { font-size: 1.4rem; margin: 0; }
+h2 { font-size: 1.05rem; margin: 0 0 10px; }
+.sub { color: #5b6475; margin: 2px 0 0; }
+
+.estado { font-size: 0.85rem; color: #a1271f; white-space: nowrap; }
+.estado::before { content: '● '; }
+.estado.en-linea { color: #146c2e; }
+
+.aviso {
+  background: #fff4d6;
+  color: #6b4e00;
+  padding: 10px 14px;
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+
+.tarjeta-seccion {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+.pendiente { color: #5b6475; margin: 0; font-style: italic; }
+
+dl { margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+dl div { background: #f4f6fa; border-radius: 8px; padding: 10px 12px; }
+dt { font-size: 0.8rem; color: #5b6475; }
+dd { margin: 2px 0 0; font-weight: 600; font-size: 1.05rem; }

@@ -1,0 +1,34 @@
+<app-encabezado titulo="Perfil" [volver]="true" />
+
+<main>
+  @if (auth.usuario(); as u) {
+    <section class="tarjeta-seccion">
+      <h2>Mis datos</h2>
+      <dl>
+        <div><dt>Nombre</dt><dd>{{ u.nombre }}</dd></div>
+        <div><dt>Teléfono</dt><dd>+{{ u.telefono }}</dd></div>
+        <div><dt>Rol</dt><dd>{{ u.rol === 'principal' ? 'Usuario principal' : 'Invitado' }}</dd></div>
+        <div>
+          <dt>Telegram</dt>
+          <dd>
+            @if (u.verificado) { ✅ Verificado } @else { ⚠️ Sin verificar · <a routerLink="/verificacion">Verificar</a> }
+          </dd>
+        </div>
+      </dl>
+      <p class="pendiente">Editar datos e invitar a otras personas estará disponible próximamente.</p>
+    </section>
+  }
+
+  <section class="tarjeta-seccion">
+    <h2>Notificaciones</h2>
+    <p>Envía un mensaje de prueba por Telegram a todos los perfiles verificados del ambiente.</p>
+    <button class="boton secundario" type="button" (click)="enviarPrueba()" [disabled]="enviando()">
+      {{ enviando() ? 'Enviando…' : 'Enviar notificación de prueba' }}
+    </button>
+    @if (mensajePrueba()) {
+      <p class="resultado">{{ mensajePrueba() }}</p>
+    }
+  </section>
+
+  <button class="boton secundario salir" type="button" (click)="auth.logout()">Cerrar sesión</button>
+</main>

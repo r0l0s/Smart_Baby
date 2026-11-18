@@ -1,6 +1,7 @@
 // Broker MQTT embebido (aedes). Los dispositivos (o el simulador) se conectan aquí.
 import net from 'node:net';
 import { Aedes } from 'aedes';
+import { supabase } from '../db.js';
 
 // Último "estado" conocido de cada dispositivo, por código (ej. "cuna-01").
 // Se llena con los mensajes retenidos dispositivos/{codigo}/estado.
@@ -31,6 +32,15 @@ export async function iniciarBroker(puerto) {
       estados.set(codigo, { ...(antes || {}), ...datos, actualizado: new Date().toISOString() });
       if (!antes || antes.online !== datos.online) {
         console.log(`[mqtt] ${codigo} → ${datos.online ? 'en línea' : 'fuera de línea'}`);
+      }
+      // Guarda el último estado conocido si el dispositivo está vinculado (si no, no actualiza nada).
+      if (datos.online && supabase) {
+        const { tipo: _t, online: _o, ...estado } = datos;
+        supabase
+          .from('dispositivos')
+          .update({ estado })
+          .eq('codigo', codigo)
+          .then(({ error }) => error && console.error(`[mqtt] No se pudo guardar el estado de ${codigo}:`, error.message));
       }
     }
     // lecturas y eventos se manejarán en las historias de usuario siguientes.

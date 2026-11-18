@@ -1,0 +1,57 @@
+<!-- CA3: el encabezado tiene el botón Volver a la pantalla principal -->
+<app-encabezado [titulo]="dispositivo()?.nombre ?? 'Dispositivo'" [volver]="true">
+  @if (dispositivo(); as d) {
+    <span class="estado" [class.en-linea]="d.online">{{ d.online ? 'En línea' : 'Fuera de línea' }}</span>
+  }
+</app-encabezado>
+
+<main>
+  @if (error()) {
+    <div class="alerta-error">{{ error() }}</div>
+  }
+
+  @if (dispositivo(); as d) {
+    <div class="cabecera">
+      <span class="emoji">{{ infoTipo(d.tipo).emoji }}</span>
+      <div>
+        <h1>{{ d.nombre }}</h1>
+        <p class="sub">{{ infoTipo(d.tipo).nombre }} · código {{ d.codigo }}</p>
+      </div>
+    </div>
+
+    @if (!d.online) {
+      <div class="aviso">⚠️ El dispositivo está fuera de línea. Se muestran los últimos datos conocidos.</div>
+    }
+
+    <!-- CA1: controles propios de cada tipo (se agregan en las historias de cada dispositivo) -->
+    <section class="tarjeta-seccion">
+      <h2>Controles</h2>
+      @switch (d.tipo) {
+        @case ('cuna') { <p class="pendiente">Activar/desactivar monitoreo — HU-CUN-01.</p> }
+        @case ('colchon') { <p class="pendiente">Activar/desactivar monitoreo de peso — HU-COL-01 / HU-COL-03.</p> }
+        @case ('seguridad') { <p class="pendiente">Activar/desactivar el sistema — HU-SEG-01.</p> }
+        @case ('biberon') { <p class="pendiente">Medir temperatura de la leche — HU-ALI-01.</p> }
+        @case ('matriz') { <p class="pendiente">Encender, apagar y velocidad — Incremento 2 (HU-MAT-*).</p> }
+      }
+    </section>
+
+    <section class="tarjeta-seccion">
+      <h2>Estado actual</h2>
+      <dl>
+        @for (v of valores(d); track v.etiqueta) {
+          <div><dt>{{ v.etiqueta }}</dt><dd>{{ v.valor }}</dd></div>
+        }
+      </dl>
+    </section>
+
+    <!-- CA2: gráficas (componente reutilizable de HU-TRN-02) -->
+    @if (d.tipo === 'cuna' || d.tipo === 'colchon') {
+      <section class="tarjeta-seccion">
+        <h2>Gráficas</h2>
+        <p class="pendiente">Las gráficas de lecturas se agregan con HU-TRN-02.</p>
+      </section>
+    }
+  } @else if (!error()) {
+    <p>Cargando…</p>
+  }
+</main>

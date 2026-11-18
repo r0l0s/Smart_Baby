@@ -41,11 +41,12 @@
         document.getElementById('grid').innerHTML = lista.map((d) => `
           <div class="card">
             <h2>${d.codigo}
-              <span class="badge ${d.conectado ? 'on' : 'off'}">${d.conectado ? 'en línea' : 'desconectado'}</span>
+              <span class="badge ${d.conectado ? 'on' : 'off'}">${d.conectado ? 'en línea' : d.apagado ? 'apagado' : 'desconectado'}</span>
             </h2>
             ${d.estado.alarma ? '<strong style="color:#a1271f">🚨 ALARMA SONANDO</strong>' : ''}
             <pre>${JSON.stringify(d.estado, null, 2)}</pre>
             <div class="botones">
+              <button onclick="energia('${d.codigo}', ${d.apagado})">${d.apagado ? '🔌 Encender' : '⏻ Apagar'}</button>
               ${(escenarios[d.tipo] || []).map((e) => `<button disabled title="Pendiente">${e}</button>`).join('')}
             </div>
           </div>`).join('');
@@ -53,6 +54,15 @@
         document.getElementById('grid').textContent = 'No se pudo contactar al simulador.';
       }
     }
+    async function energia(codigo, encendido) {
+      await fetch(`/api/dispositivos/${codigo}/energia`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ encendido }),
+      });
+      setTimeout(refrescar, 300);
+    }
+
     refrescar();
     setInterval(refrescar, 2000);
   </script>

@@ -1,0 +1,17 @@
+main { max-width: 720px; margin: 0 auto; padding: 16px; }
+h2 { font-size: 1.05rem; margin: 0 0 10px; }
+.tarjeta-seccion {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+dl { margin: 0 0 12px; display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+dl div { background: #f4f6fa; border-radius: 8px; padding: 10px 12px; }
+dt { font-size: 0.8rem; color: #5b6475; }
+dd { margin: 2px 0 0; font-weight: 600; }
+.pendiente { color: #5b6475; margin: 0; font-style: italic; }
+.boton { max-width: 320px; }
+.resultado { margin-bottom: 0; color: #146c2e; }
+.salir { margin-top: 8px; }

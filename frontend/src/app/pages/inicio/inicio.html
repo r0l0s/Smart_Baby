@@ -1,7 +1,6 @@
-<header>
-  <span class="marca">SmartBaby</span>
+<app-encabezado titulo="SmartBaby">
   <button class="salir" type="button" (click)="auth.logout()">Cerrar sesión</button>
-</header>
+</app-encabezado>
 
 @if (auth.usuario() && !auth.usuario()!.verificado) {
   <!-- HU-PLA-02 CA4: recordatorio para cuentas sin verificar -->
@@ -13,19 +12,47 @@
 
 <main>
   <h1>Hola, {{ auth.usuario()?.nombre }}</h1>
-  <p class="sub">
-    {{ auth.usuario()?.rol === 'invitado' ? 'Perfil invitado' : 'Usuario principal' }}
-  </p>
-  <p>Aquí aparecerán tus dispositivos.</p>
 
-  <section class="prueba">
-    <h2>Notificaciones</h2>
-    <p>Envía un mensaje de prueba por Telegram a todos los perfiles verificados del ambiente.</p>
-    <button class="boton secundario" type="button" (click)="enviarPrueba()" [disabled]="enviando()">
-      {{ enviando() ? 'Enviando…' : 'Enviar notificación de prueba' }}
-    </button>
-    @if (mensajePrueba()) {
-      <p class="resultado">{{ mensajePrueba() }}</p>
+  <!-- CA1: los dos botones principales -->
+  <div class="acciones">
+    <a class="accion" routerLink="/agregar-dispositivo">
+      <span class="icono">➕</span> Agregar dispositivo
+    </a>
+    <a class="accion" routerLink="/perfil">
+      <span class="icono">👤</span> Perfil
+    </a>
+  </div>
+
+  <h2>Mis dispositivos</h2>
+
+  @if (error()) {
+    <div class="alerta-error">{{ error() }}</div>
+  }
+
+  @if (dispositivos(); as lista) {
+    @if (lista.length) {
+      <!-- CA2 y CA3: un botón por dispositivo que abre su pantalla -->
+      <div class="rejilla">
+        @for (d of lista; track d.id) {
+          <a class="dispositivo" [routerLink]="['/dispositivo', d.id]">
+            <span class="emoji">{{ infoTipo(d.tipo).emoji }}</span>
+            <span class="nombre">{{ d.nombre }}</span>
+            <span class="estado" [class.en-linea]="d.online">
+              {{ d.online ? 'En línea' : 'Fuera de línea' }}
+            </span>
+          </a>
+        }
+      </div>
+    } @else {
+      <!-- CA4: sin dispositivos -->
+      <div class="vacio">
+        <p class="emoji-grande">🍼</p>
+        <p><strong>Todavía no tienes dispositivos.</strong></p>
+        <p>Pulsa <strong>Agregar dispositivo</strong> para vincular el primero.</p>
+        <a class="boton" routerLink="/agregar-dispositivo">Agregar mi primer dispositivo</a>
+      </div>
     }
-  </section>
+  } @else if (!error()) {
+    <p>Cargando…</p>
+  }
 </main>
