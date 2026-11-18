@@ -10,6 +10,7 @@ import { HistorialEventos } from '../../shared/historial-eventos';
 import { ControlesCuna } from './controles-cuna';
 import { ControlesColchon } from './controles-colchon';
 import { ControlesSeguridad } from './controles-seguridad';
+import { ControlesBiberon } from './controles-biberon';
 
 const INTERVALO_MS = 3000;
 
@@ -50,7 +51,7 @@ const ETIQUETAS: Record<string, { texto: string; unidad?: string }> = {
 
 @Component({
   selector: 'app-dispositivo',
-  imports: [Encabezado, GraficasMonitoreo, HistorialEventos, ControlesCuna, ControlesColchon, ControlesSeguridad],
+  imports: [Encabezado, GraficasMonitoreo, HistorialEventos, ControlesCuna, ControlesColchon, ControlesSeguridad, ControlesBiberon],
   templateUrl: './dispositivo.html',
   styleUrl: './dispositivo.css',
 })

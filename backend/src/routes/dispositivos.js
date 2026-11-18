@@ -15,6 +15,7 @@ import { olvidarDispositivo, monitoreoActivo } from '../services/registro.js';
 import * as cuna from '../services/cuna.js';
 import * as colchon from '../services/colchon.js';
 import * as seguridad from '../services/seguridad.js';
+import * as biberon from '../services/biberon.js';
 import { config } from '../config.js';
 
 const router = Router();
@@ -107,7 +108,27 @@ router.get('/:id', async (req, res, next) => {
   try {
     const d = await dispositivoDelAmbiente(req, res);
     if (!d) return;
-    res.json({ ...dispositivoPublico(d), monitoreo: await monitoreoActivo(d.id), intervalo_seg: config.intervaloCunaSeg });
+    res.json({
+      ...dispositivoPublico(d),
+      monitoreo: await monitoreoActivo(d.id),
+      intervalo_seg: config.intervaloCunaSeg,
+      ...(d.tipo === 'biberon' && { ultima_medicion: await biberon.ultimaMedicion(d.id) }),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/dispositivos/:id/medir — base de biberón: medir la temperatura de la leche (HU-ALI-01)
+router.post('/:id/medir', async (req, res, next) => {
+  try {
+    const d = await dispositivoDelAmbiente(req, res);
+    if (!d) return;
+    if (d.tipo !== 'biberon') return res.status(400).json({ error: 'Este dispositivo no mide temperatura de biberón' });
+    if (!estadoEnVivo(d.codigo)?.online) {
+      return res.status(409).json({ error: 'La base de biberón está fuera de línea. Revisa que esté encendida.' });
+    }
+    res.json(await biberon.medir(d));
   } catch (err) {
     next(err);
   }

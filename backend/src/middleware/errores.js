@@ -2,6 +2,7 @@
 export function manejarErrores(err, req, res, next) {
   console.error('[api] Error:', err);
   if (res.headersSent) return next(err);
+  // Los errores que creamos a propósito traen "status" y un mensaje en español para el usuario.
   const status = err.status || 500;
-  res.status(status).json({ error: status < 500 ? err.message : 'Error interno del servidor' });
+  res.status(status).json({ error: err.status ? err.message : 'Error interno del servidor' });
 }

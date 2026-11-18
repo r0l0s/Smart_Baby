@@ -30,11 +30,12 @@
         @case ('cuna') { <app-controles-cuna [dispositivo]="d" (cambio)="cargar()" /> }
         @case ('colchon') { <app-controles-colchon [dispositivo]="d" (cambio)="cargar()" /> }
         @case ('seguridad') { <app-controles-seguridad [dispositivo]="d" (cambio)="cargar()" /> }
-        @case ('biberon') { <p class="pendiente">Medir temperatura de la leche — HU-ALI-01.</p> }
+        @case ('biberon') { <app-controles-biberon [dispositivo]="d" /> }
         @case ('matriz') { <p class="pendiente">Encender, apagar y velocidad — Incremento 2 (HU-MAT-*).</p> }
       }
     </section>
 
+    @if (valores(d).length) {
     <section class="tarjeta-seccion">
       <h2>Estado actual</h2>
       <dl>
@@ -43,6 +44,7 @@
         }
       </dl>
     </section>
+    }
 
     <!-- CA2: gráficas (componente reutilizable de HU-TRN-02) -->
     @if (series[d.tipo]; as s) {

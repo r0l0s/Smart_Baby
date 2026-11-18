@@ -18,6 +18,15 @@ export interface Dispositivo {
   monitoreo?: { id: string; inicio: string; fin: string | null } | null;
   /** Solo en el detalle: cada cuántos segundos se actualizan los datos */
   intervalo_seg?: number;
+  /** Solo en el detalle de una base de biberón */
+  ultima_medicion?: Medicion | null;
+}
+
+export interface Medicion {
+  valor: number;
+  clasificacion: 'muy_fria' | 'apta' | 'muy_caliente';
+  mensaje: string;
+  registrado_en: string;
 }
 
 export interface InfoTipo {

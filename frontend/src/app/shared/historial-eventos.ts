@@ -21,7 +21,7 @@ const NOMBRES: Record<string, string> = {
   alarma_incremento: '🚨 Alarma: el peso subió',
   movimiento: '📷 Movimiento detectado',
   apertura_puerta: '🚪 Puerta abierta',
-  medicion: '🌡️ Medición',
+  medicion: '🍼 Temperatura de la leche',
 };
 
 const INTERVALO_MS = 3000;
