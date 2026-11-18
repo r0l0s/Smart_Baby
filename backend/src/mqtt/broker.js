@@ -2,7 +2,7 @@
 import net from 'node:net';
 import { Aedes } from 'aedes';
 import { supabase } from '../db.js';
-import { alRecibirLecturas, alRecibirEvento } from './handlers.js';
+import { alRecibirLecturas, alRecibirEvento, alConectarse } from './handlers.js';
 
 // Último "estado" conocido de cada dispositivo, por código (ej. "cuna-01").
 // Se llena con los mensajes retenidos dispositivos/{codigo}/estado.
@@ -33,6 +33,9 @@ export async function iniciarBroker(puerto) {
       estados.set(codigo, { ...(antes || {}), ...datos, actualizado: new Date().toISOString() });
       if (!antes || antes.online !== datos.online) {
         console.log(`[mqtt] ${codigo} → ${datos.online ? 'en línea' : 'fuera de línea'}`);
+        if (datos.online) {
+          alConectarse(codigo).catch((err) => console.error(`[mqtt] Error al reconectar ${codigo}:`, err.message));
+        }
       }
       // Guarda el último estado conocido si el dispositivo está vinculado (si no, no actualiza nada).
       if (datos.online && supabase) {

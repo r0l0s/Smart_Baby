@@ -127,4 +127,11 @@ async function alRecibirLecturas(dispositivo, filas) {
   }
 }
 
-registrarManejador('cuna', { requiereMonitoreo: true, lecturas: alRecibirLecturas });
+// Si la cuna se reinicia con un monitoreo abierto, se le vuelve a ordenar que encienda los sensores.
+function alConectarse(dispositivo, monitoreo) {
+  if (!monitoreo) return;
+  enviarComando(dispositivo.codigo, { accion: 'activar_monitoreo' });
+  console.log(`[cuna] ${dispositivo.codigo} volvió en línea con monitoreo activo: sensores reactivados`);
+}
+
+registrarManejador('cuna', { requiereMonitoreo: true, lecturas: alRecibirLecturas, conectado: alConectarse });

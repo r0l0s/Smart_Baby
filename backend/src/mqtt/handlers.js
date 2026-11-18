@@ -30,6 +30,14 @@ export async function alRecibirLecturas(codigo, datos) {
   if (filas.length) await manejador?.lecturas?.(dispositivo, filas, monitoreo);
 }
 
+// Un dispositivo vuelve a estar en línea (por ejemplo, tras reiniciarse).
+export async function alConectarse(codigo) {
+  const dispositivo = await dispositivoPorCodigo(codigo);
+  if (!dispositivo) return;
+  const manejador = manejadores[dispositivo.tipo];
+  if (manejador?.conectado) await manejador.conectado(dispositivo, await monitoreoActivo(dispositivo.id));
+}
+
 export async function alRecibirEvento(codigo, datos) {
   const dispositivo = await dispositivoPorCodigo(codigo);
   if (!dispositivo) return;
