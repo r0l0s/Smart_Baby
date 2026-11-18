@@ -16,6 +16,8 @@ export const config = {
   jwtSecret: process.env.JWT_SECRET || '',
   telegramToken: process.env.TELEGRAM_BOT_TOKEN || '',
   telegramUsername: process.env.TELEGRAM_BOT_USERNAME || '',
+  // Clave que los dispositivos envían al subir fotos por HTTP (encabezado X-Dispositivo-Clave)
+  iotClave: process.env.IOT_CLAVE || 'clave-dispositivos-demo',
   modoDemo,
   intervaloCunaSeg: modoDemo ? 10 : Number(process.env.INTERVALO_CUNA_SEG || 180),
 };

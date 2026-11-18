@@ -29,7 +29,7 @@
       @switch (d.tipo) {
         @case ('cuna') { <app-controles-cuna [dispositivo]="d" (cambio)="cargar()" /> }
         @case ('colchon') { <app-controles-colchon [dispositivo]="d" (cambio)="cargar()" /> }
-        @case ('seguridad') { <p class="pendiente">Activar/desactivar el sistema — HU-SEG-01.</p> }
+        @case ('seguridad') { <app-controles-seguridad [dispositivo]="d" (cambio)="cargar()" /> }
         @case ('biberon') { <p class="pendiente">Medir temperatura de la leche — HU-ALI-01.</p> }
         @case ('matriz') { <p class="pendiente">Encender, apagar y velocidad — Incremento 2 (HU-MAT-*).</p> }
       }

@@ -9,6 +9,7 @@ import saludRouter from './routes/salud.js';
 import authRouter from './routes/auth.js';
 import notificacionesRouter from './routes/notificaciones.js';
 import dispositivosRouter from './routes/dispositivos.js';
+import iotRouter from './routes/iot.js';
 import { requiereSesion } from './middleware/auth.js';
 import { iniciarConsultaPeriodica } from './services/cuna.js';
 
@@ -23,6 +24,7 @@ app.use(express.json());
 // Rutas públicas
 app.use('/api/salud', saludRouter);
 app.use('/api/auth', authRouter); // registro y login son públicos; /yo exige sesión
+app.use('/api/iot', iotRouter); // dispositivos: usan la clave X-Dispositivo-Clave, no JWT
 
 // Todas las rutas siguientes exigen sesión (RNF-08)
 app.use('/api/notificaciones', requiereSesion, notificacionesRouter);

@@ -1,0 +1,1 @@
+Coloca aquí fotos .jpg o .png para que el sistema de seguridad simulado las use. Si no hay ninguna, se dibuja una imagen.

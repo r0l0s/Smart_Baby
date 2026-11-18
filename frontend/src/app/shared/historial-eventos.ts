@@ -19,7 +19,7 @@ const NOMBRES: Record<string, string> = {
   peso_base: '⚖️ Peso base registrado',
   alarma_decremento: '🚨 Alarma: el peso bajó',
   alarma_incremento: '🚨 Alarma: el peso subió',
-  movimiento: '🏃 Movimiento detectado',
+  movimiento: '📷 Movimiento detectado',
   apertura_puerta: '🚪 Puerta abierta',
   medicion: '🌡️ Medición',
 };
@@ -56,7 +56,8 @@ const INTERVALO_MS = 3000;
     .fecha { color: #5b6475; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
     .tipo { font-weight: 600; }
     .detalle { color: #3a4354; font-size: 0.9rem; flex-basis: 100%; }
-    img { max-width: 160px; border-radius: 8px; margin-top: 4px; }
+    img { width: 100%; max-width: 320px; border-radius: 8px; margin-top: 4px; display: block; }
+    a:has(img) { flex-basis: 100%; }
     .vacio { color: #5b6475; font-style: italic; margin: 0; }
   `,
 })
