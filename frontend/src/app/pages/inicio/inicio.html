@@ -1,0 +1,12 @@
+<header>
+  <span class="marca">SmartBaby</span>
+  <button class="salir" type="button" (click)="auth.logout()">Cerrar sesión</button>
+</header>
+
+<main>
+  <h1>Hola, {{ auth.usuario()?.nombre }}</h1>
+  <p class="sub">
+    {{ auth.usuario()?.rol === 'invitado' ? 'Perfil invitado' : 'Usuario principal' }}
+  </p>
+  <p>Aquí aparecerán tus dispositivos.</p>
+</main>

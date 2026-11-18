@@ -1,0 +1,39 @@
+<div class="pantalla-centrada">
+  <form class="tarjeta" (ngSubmit)="enviar()" novalidate>
+    <h1>Crear cuenta</h1>
+    <p class="sub">Regístrate para crear tu ambiente y administrar tus dispositivos.</p>
+
+    @if (errorGeneral()) {
+      <div class="alerta-error">{{ errorGeneral() }}</div>
+    }
+
+    <div class="campo">
+      <label for="nombre">Nombre</label>
+      <input id="nombre" name="nombre" [(ngModel)]="nombre" autocomplete="name"
+             [class.invalido]="errores().nombre" placeholder="Ej. María Pérez">
+      @if (errores().nombre) { <span class="error-campo">{{ errores().nombre }}</span> }
+    </div>
+
+    <div class="campo">
+      <label for="telefono">Teléfono móvil</label>
+      <input id="telefono" name="telefono" type="tel" inputmode="tel" [(ngModel)]="telefono"
+             autocomplete="tel" [class.invalido]="errores().telefono" placeholder="Ej. 8888-8888">
+      <span class="ayuda">El mismo número que usas en Telegram.</span>
+      @if (errores().telefono) { <span class="error-campo">{{ errores().telefono }}</span> }
+    </div>
+
+    <div class="campo">
+      <label for="password">Contraseña</label>
+      <input id="password" name="password" type="password" [(ngModel)]="password"
+             autocomplete="new-password" [class.invalido]="errores().password">
+      <span class="ayuda">Mínimo 8 caracteres.</span>
+      @if (errores().password) { <span class="error-campo">{{ errores().password }}</span> }
+    </div>
+
+    <button class="boton" type="submit" [disabled]="enviando()">
+      {{ enviando() ? 'Creando cuenta…' : 'Crear cuenta' }}
+    </button>
+
+    <p class="pie">¿Ya tienes cuenta? <a routerLink="/login">Inicia sesión</a></p>
+  </form>
+</div>

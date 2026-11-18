@@ -143,3 +143,7 @@ alter table eventos               enable row level security;
 alter table horarios_matriz       enable row level security;
 alter table sesiones_alimentacion enable row level security;
 alter table tiempos_comida        enable row level security;
+
+-- Pide a la API de Supabase que vuelva a leer la lista de tablas (evita el error
+-- "Could not find the table ... in the schema cache" justo después de crearlas).
+notify pgrst, 'reload schema';

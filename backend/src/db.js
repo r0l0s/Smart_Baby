@@ -26,6 +26,8 @@ export async function prepararStorage() {
 // Revisa que Supabase responda y que el esquema exista. Devuelve un texto corto.
 export async function estadoSupabase() {
   if (!supabase) return 'sin configurar (falta SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY)';
-  const { error } = await supabase.from('ambientes').select('id', { count: 'exact', head: true });
+  // Consulta real (no "head"): una consulta solo-conteo no da error si la tabla no existe.
+  const { error } = await supabase.from('usuarios').select('id').limit(1);
+  if (error?.code === 'PGRST205') return 'error: faltan las tablas — ejecuta db/schema.sql en Supabase';
   return error ? `error: ${error.message}` : 'ok';
 }
