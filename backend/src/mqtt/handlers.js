@@ -41,6 +41,14 @@ export async function alConectarse(codigo) {
 export async function alRecibirEvento(codigo, datos) {
   const dispositivo = await dispositivoPorCodigo(codigo);
   if (!dispositivo) return;
-  const fila = await guardarEvento(dispositivo, datos);
-  await manejadores[dispositivo.tipo]?.evento?.(dispositivo, fila);
+  const manejador = manejadores[dispositivo.tipo];
+  const monitoreo = await monitoreoActivo(dispositivo.id);
+  if (manejador?.requiereMonitoreo && !monitoreo) {
+    console.log(`[mqtt] ${codigo}: evento "${datos?.tipo}" ignorado (monitoreo desactivado)`);
+    return;
+  }
+  // El manejador puede completar el detalle (por ejemplo, con un mensaje legible) antes de guardar.
+  const listo = manejador?.prepararEvento ? manejador.prepararEvento(dispositivo, datos) : datos;
+  const fila = await guardarEvento(dispositivo, listo);
+  await manejador?.evento?.(dispositivo, fila, monitoreo);
 }

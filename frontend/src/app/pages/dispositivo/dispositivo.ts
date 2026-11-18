@@ -8,6 +8,7 @@ import { Encabezado } from '../../shared/encabezado';
 import { GraficasMonitoreo, SerieGrafica } from '../../shared/graficas-monitoreo';
 import { HistorialEventos } from '../../shared/historial-eventos';
 import { ControlesCuna } from './controles-cuna';
+import { ControlesColchon } from './controles-colchon';
 
 const INTERVALO_MS = 3000;
 
@@ -36,7 +37,10 @@ const ETIQUETAS: Record<string, { texto: string; unidad?: string }> = {
   luz: { texto: 'Luz (nivel)' },
   sonido: { texto: 'Sonido' },
   peso: { texto: 'Peso', unidad: 'kg' },
-  alarma: { texto: 'Alarma' },
+  alarma: { texto: 'Alarma sonando' },
+  fase: { texto: 'Fase' },
+  peso_base: { texto: 'Peso base', unidad: 'kg' },
+  cuenta_hasta: { texto: 'Cuenta regresiva hasta' },
   encendida: { texto: 'Encendida' },
   velocidad: { texto: 'Velocidad' },
   activo: { texto: 'Sistema activo' },
@@ -45,7 +49,7 @@ const ETIQUETAS: Record<string, { texto: string; unidad?: string }> = {
 
 @Component({
   selector: 'app-dispositivo',
-  imports: [Encabezado, GraficasMonitoreo, HistorialEventos, ControlesCuna],
+  imports: [Encabezado, GraficasMonitoreo, HistorialEventos, ControlesCuna, ControlesColchon],
   templateUrl: './dispositivo.html',
   styleUrl: './dispositivo.css',
 })

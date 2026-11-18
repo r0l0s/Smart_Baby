@@ -13,6 +13,7 @@ import {
 } from '../services/dispositivos.js';
 import { olvidarDispositivo, monitoreoActivo } from '../services/registro.js';
 import * as cuna from '../services/cuna.js';
+import * as colchon from '../services/colchon.js';
 import { config } from '../config.js';
 
 const router = Router();
@@ -112,7 +113,7 @@ router.get('/:id', async (req, res, next) => {
 });
 
 // Servicios que saben activar/desactivar el monitoreo de cada tipo de dispositivo.
-const MONITOREO = { cuna };
+const MONITOREO = { cuna, colchon };
 
 // POST /api/dispositivos/:id/monitoreo  { activo: true|false }  (HU-CUN-01)
 router.post('/:id/monitoreo', async (req, res, next) => {

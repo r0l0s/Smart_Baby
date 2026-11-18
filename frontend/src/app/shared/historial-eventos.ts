@@ -16,6 +16,7 @@ const NOMBRES: Record<string, string> = {
   desactivacion: '⏹️ Monitoreo desactivado',
   alerta_temperatura: '🌡️ Alerta de temperatura',
   alerta_humedad: '💧 Alerta de humedad',
+  peso_base: '⚖️ Peso base registrado',
   alarma_decremento: '🚨 Alarma: el peso bajó',
   alarma_incremento: '🚨 Alarma: el peso subió',
   movimiento: '🏃 Movimiento detectado',
