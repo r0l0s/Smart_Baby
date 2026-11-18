@@ -11,6 +11,7 @@ import {
   disponibles,
   nombrePorDefecto,
 } from '../services/dispositivos.js';
+import { olvidarDispositivo } from '../services/registro.js';
 
 const router = Router();
 
@@ -73,6 +74,7 @@ router.post('/', async (req, res, next) => {
       if (error.code === '23505') return res.status(409).json({ error: 'Este dispositivo ya está vinculado a un ambiente.' });
       throw error;
     }
+    olvidarDispositivo(codigo); // para que sus lecturas se guarden de inmediato
     console.log(`[api] Dispositivo ${codigo} vinculado`);
     res.status(201).json(dispositivoPublico(data));
   } catch (err) {
@@ -80,19 +82,88 @@ router.post('/', async (req, res, next) => {
   }
 });
 
+// Busca el dispositivo :id SOLO dentro del ambiente del usuario. Si no existe, responde 404
+// y devuelve null.
+async function dispositivoDelAmbiente(req, res) {
+  const { data, error } = await supabase
+    .from('dispositivos')
+    .select('*')
+    .eq('id', req.params.id)
+    .eq('ambiente_id', req.usuario.ambiente_id)
+    .maybeSingle();
+  // 22P02 = el id no tiene formato uuid
+  if (error && error.code !== '22P02') throw error;
+  if (!data) res.status(404).json({ error: 'Dispositivo no encontrado' });
+  return data;
+}
+
 // GET /api/dispositivos/:id — un dispositivo del ambiente (pantalla dedicada)
 router.get('/:id', async (req, res, next) => {
   try {
+    const d = await dispositivoDelAmbiente(req, res);
+    if (d) res.json(dispositivoPublico(d));
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/dispositivos/:id/monitoreos — historial de monitoreos, el más reciente primero
+router.get('/:id/monitoreos', async (req, res, next) => {
+  try {
+    const d = await dispositivoDelAmbiente(req, res);
+    if (!d) return;
+    const limite = Math.min(Number(req.query.limite) || 20, 100);
     const { data, error } = await supabase
-      .from('dispositivos')
-      .select('*')
-      .eq('id', req.params.id)
-      .eq('ambiente_id', req.usuario.ambiente_id)
-      .maybeSingle();
-    // 22P02 = el id no tiene formato uuid
+      .from('monitoreos')
+      .select('id, inicio, fin')
+      .eq('dispositivo_id', d.id)
+      .order('inicio', { ascending: false })
+      .limit(limite);
+    if (error) throw error;
+    res.json(data);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/dispositivos/:id/lecturas?tipo=temperatura&monitoreo=<id>
+//   o bien ?tipo=...&desde=<fecha ISO>&hasta=<fecha ISO>   (HU-TRN-02)
+router.get('/:id/lecturas', async (req, res, next) => {
+  try {
+    const d = await dispositivoDelAmbiente(req, res);
+    if (!d) return;
+    let consulta = supabase
+      .from('lecturas')
+      .select('valor, unidad, registrado_en')
+      .eq('dispositivo_id', d.id)
+      .order('registrado_en', { ascending: true })
+      .limit(5000);
+    if (req.query.tipo) consulta = consulta.eq('tipo', String(req.query.tipo));
+    if (req.query.monitoreo) consulta = consulta.eq('monitoreo_id', String(req.query.monitoreo));
+    if (req.query.desde) consulta = consulta.gte('registrado_en', String(req.query.desde));
+    if (req.query.hasta) consulta = consulta.lte('registrado_en', String(req.query.hasta));
+    const { data, error } = await consulta;
     if (error && error.code !== '22P02') throw error;
-    if (!data) return res.status(404).json({ error: 'Dispositivo no encontrado' });
-    res.json(dispositivoPublico(data));
+    res.json((data ?? []).map((l) => ({ t: l.registrado_en, v: Number(l.valor), unidad: l.unidad })));
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/dispositivos/:id/eventos?limite=50 — últimos eventos, el más reciente primero (HU-TRN-01)
+router.get('/:id/eventos', async (req, res, next) => {
+  try {
+    const d = await dispositivoDelAmbiente(req, res);
+    if (!d) return;
+    const limite = Math.min(Number(req.query.limite) || 50, 500);
+    const { data, error } = await supabase
+      .from('eventos')
+      .select('id, tipo, detalle, foto_url, registrado_en')
+      .eq('dispositivo_id', d.id)
+      .order('registrado_en', { ascending: false })
+      .limit(limite);
+    if (error) throw error;
+    res.json(data);
   } catch (err) {
     next(err);
   }

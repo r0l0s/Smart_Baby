@@ -45,12 +45,17 @@
     </section>
 
     <!-- CA2: gráficas (componente reutilizable de HU-TRN-02) -->
-    @if (d.tipo === 'cuna' || d.tipo === 'colchon') {
+    @if (series[d.tipo]; as s) {
       <section class="tarjeta-seccion">
         <h2>Gráficas</h2>
-        <p class="pendiente">Las gráficas de lecturas se agregan con HU-TRN-02.</p>
+        <app-graficas-monitoreo [dispositivoId]="d.id" [series]="s" />
       </section>
     }
+
+    <section class="tarjeta-seccion">
+      <h2>Historial de eventos</h2>
+      <app-historial-eventos [dispositivoId]="d.id" />
+    </section>
   } @else if (!error()) {
     <p>Cargando…</p>
   }

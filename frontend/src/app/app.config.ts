@@ -3,6 +3,7 @@ import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { routes } from './app.routes';
 import { authInterceptor } from './core/auth.interceptor';
+import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -10,5 +11,6 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes, withComponentInputBinding()), // pasa :id de la URL como input
 
     provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
+    provideCharts(withDefaultRegisterables()), // Chart.js para las gráficas (HU-TRN-02)
   ],
 };

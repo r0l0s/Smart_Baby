@@ -2,6 +2,7 @@
 import net from 'node:net';
 import { Aedes } from 'aedes';
 import { supabase } from '../db.js';
+import { alRecibirLecturas, alRecibirEvento } from './handlers.js';
 
 // Último "estado" conocido de cada dispositivo, por código (ej. "cuna-01").
 // Se llena con los mensajes retenidos dispositivos/{codigo}/estado.
@@ -43,7 +44,15 @@ export async function iniciarBroker(puerto) {
           .then(({ error }) => error && console.error(`[mqtt] No se pudo guardar el estado de ${codigo}:`, error.message));
       }
     }
-    // lecturas y eventos se manejarán en las historias de usuario siguientes.
+
+    // Lecturas y eventos: guardar y aplicar la lógica del tipo de dispositivo.
+    // Un error aquí nunca debe tumbar el broker.
+    const registrar = { lecturas: alRecibirLecturas, eventos: alRecibirEvento }[tipoMensaje];
+    if (registrar && client) {
+      registrar(codigo, datos).catch((err) =>
+        console.error(`[mqtt] Error procesando ${tipoMensaje} de ${codigo}:`, err.message),
+      );
+    }
   });
 
   await new Promise((resolve, reject) => {

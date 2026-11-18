@@ -3,10 +3,29 @@
 // cada tipo se agregan en sus historias (cuna: HU-CUN-*, colchón: HU-COL-*, ...).
 import { Component, DestroyRef, OnInit, inject, input, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Dispositivo, DispositivosService, infoTipo } from '../../core/dispositivos';
+import { Dispositivo, DispositivosService, TipoDispositivo, infoTipo } from '../../core/dispositivos';
 import { Encabezado } from '../../shared/encabezado';
+import { GraficasMonitoreo, SerieGrafica } from '../../shared/graficas-monitoreo';
+import { HistorialEventos } from '../../shared/historial-eventos';
 
 const INTERVALO_MS = 3000;
+
+// Gráficas de cada tipo de dispositivo (los que recolectan datos a lo largo del tiempo).
+const SERIES: Partial<Record<TipoDispositivo, SerieGrafica[]>> = {
+  cuna: [
+    { tipo: 'temperatura', titulo: 'Temperatura', ejeY: 'Temperatura (°C)', color: '#d9534f' },
+    { tipo: 'humedad', titulo: 'Humedad', ejeY: 'Humedad relativa (%)', color: '#3b6fd8' },
+    {
+      tipo: 'movimiento',
+      titulo: 'Movimiento',
+      ejeY: 'Detecciones de movimiento',
+      estilo: 'puntos',
+      color: '#7a4fd1',
+      textoValor: () => 'Movimiento detectado',
+    },
+  ],
+  colchon: [{ tipo: 'peso', titulo: 'Peso', ejeY: 'Peso (kg)', color: '#2e8b57' }],
+};
 
 // Etiquetas legibles para los valores del estado.
 const ETIQUETAS: Record<string, { texto: string; unidad?: string }> = {
@@ -25,7 +44,7 @@ const ETIQUETAS: Record<string, { texto: string; unidad?: string }> = {
 
 @Component({
   selector: 'app-dispositivo',
-  imports: [Encabezado],
+  imports: [Encabezado, GraficasMonitoreo, HistorialEventos],
   templateUrl: './dispositivo.html',
   styleUrl: './dispositivo.css',
 })
@@ -37,6 +56,7 @@ export class DispositivoPagina implements OnInit {
   protected dispositivo = signal<Dispositivo | null>(null);
   protected error = signal('');
   protected infoTipo = infoTipo;
+  protected series = SERIES;
 
   constructor() {
     const temporizador = setInterval(() => this.cargar(), INTERVALO_MS);
