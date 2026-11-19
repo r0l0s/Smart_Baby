@@ -1,12 +1,11 @@
 <app-encabezado titulo="Perfil" [volver]="true" />
 
+<!-- HU-PLA-07 CA1: pantalla dedicada a la gestión de la cuenta -->
 <main>
   @if (auth.usuario(); as u) {
     <section class="tarjeta-seccion">
-      <h2>Mis datos</h2>
+      <h2>Mi cuenta</h2>
       <dl>
-        <div><dt>Nombre</dt><dd>{{ u.nombre }}</dd></div>
-        <div><dt>Teléfono</dt><dd>+{{ u.telefono }}</dd></div>
         <div><dt>Rol</dt><dd>{{ u.rol === 'principal' ? 'Usuario principal' : 'Invitado' }}</dd></div>
         <div>
           <dt>Telegram</dt>
@@ -15,8 +14,19 @@
           </dd>
         </div>
       </dl>
-      <p class="pendiente">Editar datos e invitar a otras personas estará disponible próximamente.</p>
     </section>
+
+    <section class="tarjeta-seccion">
+      <h2>Mis datos</h2>
+      <app-datos-cuenta />
+    </section>
+
+    @if (u.rol === 'principal') {
+      <section class="tarjeta-seccion">
+        <h2>Cambiar contraseña</h2>
+        <app-cambiar-password />
+      </section>
+    }
   }
 
   <section class="tarjeta-seccion">

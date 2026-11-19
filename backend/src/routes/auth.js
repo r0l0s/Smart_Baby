@@ -130,6 +130,76 @@ router.get('/yo', requiereSesion, async (req, res, next) => {
   }
 });
 
+// PUT /api/auth/perfil  { nombre?, telefono? }   (HU-PLA-07)
+// Si el teléfono cambia, la cuenta queda sin verificar y se desvincula de Telegram hasta que
+// se verifique de nuevo (CA3). Responde con { usuario, requiere_verificacion }.
+router.put('/perfil', requiereSesion, async (req, res, next) => {
+  try {
+    const { data: actual, error } = await supabase.from('usuarios').select('*').eq('id', req.usuario.id).single();
+    if (error) throw error;
+    const cambios = {};
+
+    if (req.body?.nombre !== undefined) {
+      const nombre = String(req.body.nombre).trim();
+      if (!nombre) return errorCampo(res, 'nombre', 'El nombre es obligatorio');
+      if (nombre !== actual.nombre) cambios.nombre = nombre;
+    }
+    if (req.body?.telefono !== undefined) {
+      const texto = String(req.body.telefono).trim();
+      if (!texto) return errorCampo(res, 'telefono', 'El teléfono es obligatorio');
+      const telefono = normalizarTelefono(texto);
+      if (!telefonoValido(telefono)) return errorCampo(res, 'telefono', 'El teléfono no es válido');
+      if (telefono !== actual.telefono) {
+        const { data: otro, error: errOtro } = await supabase.from('usuarios').select('id').eq('telefono', telefono).maybeSingle();
+        if (errOtro) throw errOtro;
+        if (otro) return res.status(409).json({ error: 'Este teléfono ya está registrado', campo: 'telefono' });
+        Object.assign(cambios, { telefono, verificado: false, telegram_chat_id: null });
+      }
+    }
+    if (!Object.keys(cambios).length) return res.json({ usuario: usuarioPublico(actual), requiere_verificacion: false });
+
+    const { data: usuario, error: errUpd } = await supabase.from('usuarios').update(cambios).eq('id', actual.id).select().single();
+    if (errUpd) {
+      if (errUpd.code === '23505') return res.status(409).json({ error: 'Este teléfono ya está registrado', campo: 'telefono' });
+      throw errUpd;
+    }
+    if (cambios.telefono) {
+      // Los enlaces de verificación anteriores ya no sirven (eran para el número viejo).
+      await supabase.from('tokens_telegram').update({ usado: true }).eq('usuario_id', actual.id).eq('tipo', 'verificacion');
+    }
+    res.json({ usuario: usuarioPublico(usuario), requiere_verificacion: !!cambios.telefono });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// PUT /api/auth/password  { actual, nueva }   (HU-PLA-07, solo el usuario principal)
+// Es la contraseña del ambiente: los invitados también inician sesión con ella.
+router.put('/password', requiereSesion, async (req, res, next) => {
+  try {
+    if (req.usuario.rol !== 'principal') {
+      return res.status(403).json({ error: 'Solo el usuario principal puede cambiar la contraseña del ambiente' });
+    }
+    const actualTexto = String(req.body?.actual ?? '');
+    const nueva = String(req.body?.nueva ?? '');
+    if (!actualTexto) return errorCampo(res, 'actual', 'Ingresa tu contraseña actual');
+    if (nueva.length < MIN_PASSWORD) {
+      return errorCampo(res, 'nueva', `La contraseña nueva debe tener al menos ${MIN_PASSWORD} caracteres`);
+    }
+    const { data: u, error } = await supabase.from('usuarios').select('password_hash').eq('id', req.usuario.id).single();
+    if (error) throw error;
+    if (!(await bcrypt.compare(actualTexto, u.password_hash))) {
+      return errorCampo(res, 'actual', 'La contraseña actual no es correcta');
+    }
+    const password_hash = await bcrypt.hash(nueva, RONDAS_BCRYPT);
+    const { error: errUpd } = await supabase.from('usuarios').update({ password_hash }).eq('id', req.usuario.id);
+    if (errUpd) throw errUpd;
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // GET /api/auth/verificacion — estado de verificación con Telegram (HU-PLA-02).
 // Si aún no está verificado, incluye el enlace al bot (CA1) y su código QR para escanearlo
 // con el teléfono. La página web consulta esta ruta cada pocos segundos hasta que verificado = true.

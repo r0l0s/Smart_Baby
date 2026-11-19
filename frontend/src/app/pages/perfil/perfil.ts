@@ -1,14 +1,16 @@
-// Perfil. PROVISIONAL: editar datos, invitar y la lista de perfiles llegan en el Incremento 2
-// (HU-PLA-07/08/09). Por ahora muestra los datos y el botón de notificación de prueba.
+// Perfil: gestión de la cuenta (HU-PLA-07) y notificación de prueba (HU-TRN-03).
+// Invitaciones y lista de perfiles: HU-PLA-08/09.
 import { Component, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
 import { Encabezado } from '../../shared/encabezado';
+import { DatosCuenta } from './datos-cuenta';
+import { CambiarPassword } from './cambiar-password';
 
 @Component({
   selector: 'app-perfil',
-  imports: [RouterLink, Encabezado],
+  imports: [RouterLink, Encabezado, DatosCuenta, CambiarPassword],
   templateUrl: './perfil.html',
   styleUrl: './perfil.css',
 })
