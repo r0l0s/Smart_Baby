@@ -1,5 +1,5 @@
 // Horario diario de la matriz: crear (HU-MAT-03), ver, modificar y eliminar (HU-MAT-04).
-// Si ya hay un horario, intentar agregar otro lo rechaza el sistema (HU-MAT-03 CA3).
+// Solo puede haber un horario: la pantalla lo indica y el backend rechaza un segundo (HU-MAT-03 CA3).
 import { Component, DestroyRef, OnInit, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
@@ -35,10 +35,10 @@ const NOMBRE_VELOCIDAD: Record<string, string> = { lenta: 'lenta', media: 'media
           </p>
         </div>
         @if (!modo()) {
+          <p class="regla">Solo puede haber un horario. Para cambiarlo, modifícalo o elimínalo.</p>
           <div class="acciones">
             <button type="button" class="boton secundario chico" (click)="abrir('modificar', h)">✏️ Modificar</button>
             <button type="button" class="boton peligro chico" (click)="eliminar()" [disabled]="guardando()">🗑️ Eliminar</button>
-            <button type="button" class="boton secundario chico" (click)="abrir('crear')">+ Agregar otro horario</button>
           </div>
         }
       } @else {
@@ -89,6 +89,7 @@ const NOMBRE_VELOCIDAD: Record<string, string> = { lenta: 'lenta', media: 'media
     .acciones { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
     .acciones .boton, .chico { width: auto; }
     .titulo-form { font-weight: 700; margin: 4px 0 10px; }
+    .regla { color: #5b6475; font-size: 0.85rem; margin: 0 0 8px; }
     .boton.peligro { background: #fff; color: #b0281d; border: 1px solid #b0281d; }
     .alerta-error { margin: 12px 0 0; }
     .exito { color: #146c2e; margin: 12px 0 0; }
