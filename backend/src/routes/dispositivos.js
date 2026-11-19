@@ -107,14 +107,12 @@ async function dispositivoDelAmbiente(req, res) {
   return data;
 }
 
-// DELETE /api/dispositivos/:id — quita el dispositivo del ambiente (solo el usuario principal).
+// DELETE /api/dispositivos/:id — quita el dispositivo del ambiente (cualquier perfil: los invitados
+// tienen los mismos permisos que el usuario principal, HU-PLA-09 CA3).
 // No se borra la fila: se marca eliminado_en para conservar lecturas y eventos (HU-TRN-01 CA2).
 // Después, el dispositivo queda libre para vincularse de nuevo.
 router.delete('/:id', async (req, res, next) => {
   try {
-    if (req.usuario.rol !== 'principal') {
-      return res.status(403).json({ error: 'Solo el usuario principal puede eliminar dispositivos' });
-    }
     const d = await dispositivoDelAmbiente(req, res);
     if (!d) return;
 
