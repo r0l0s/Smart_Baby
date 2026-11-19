@@ -20,6 +20,7 @@ import * as biberon from '../services/biberon.js';
 import * as matriz from '../services/matriz.js';
 import * as horarioMatriz from '../services/horarioMatriz.js';
 import * as alimentacion from '../services/alimentacion.js';
+import * as comidas from '../services/comidas.js';
 import { config } from '../config.js';
 
 const router = Router();
@@ -508,6 +509,76 @@ router.post('/:id/alimentacion/:sesion/cantidad', async (req, res, next) => {
   try {
     const d = await baseDeBiberon(req, res);
     if (d) res.json({ sesion: await alimentacion.registrarCantidad(d, req.params.sesion, req.body?.cantidad_ml, req.usuario) });
+  } catch (err) {
+    errorConStatus(err, res, next);
+  }
+});
+
+// ---- Tiempos de comida (HU-ALI-04) — base de biberón ----
+
+// GET /api/dispositivos/:id/comidas — tiempos de comida ordenados por hora
+router.get('/:id/comidas', async (req, res, next) => {
+  try {
+    const d = await baseDeBiberon(req, res);
+    if (d) res.json(await comidas.listar(d.id));
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/dispositivos/:id/comidas  { hora: "HH:MM" } — CA1: agrega un tiempo de comida
+router.post('/:id/comidas', async (req, res, next) => {
+  try {
+    const d = await baseDeBiberon(req, res);
+    if (!d) return;
+    const hora = comidas.validarHora(req.body?.hora);
+    await comidas.revisarDuplicado(d.id, hora);
+    const { error } = await supabase.from('tiempos_comida').insert({ dispositivo_id: d.id, hora });
+    if (error) throw error;
+    await guardarEvento(d, { tipo: 'comidas', detalle: { mensaje: `Tiempo de comida agregado: ${hora} (por ${req.usuario.nombre})` } });
+    res.status(201).json(await comidas.listar(d.id));
+  } catch (err) {
+    errorConStatus(err, res, next);
+  }
+});
+
+// PUT /api/dispositivos/:id/comidas/:comida  { hora } — CA4: editar
+router.put('/:id/comidas/:comida', async (req, res, next) => {
+  try {
+    const d = await baseDeBiberon(req, res);
+    if (!d) return;
+    const hora = comidas.validarHora(req.body?.hora);
+    await comidas.revisarDuplicado(d.id, hora, req.params.comida);
+    const { data, error } = await supabase
+      .from('tiempos_comida')
+      .update({ hora })
+      .eq('id', req.params.comida)
+      .eq('dispositivo_id', d.id)
+      .select('id');
+    if (error && error.code !== '22P02') throw error;
+    if (!data?.length) return res.status(404).json({ error: 'Tiempo de comida no encontrado' });
+    await guardarEvento(d, { tipo: 'comidas', detalle: { mensaje: `Tiempo de comida cambiado a las ${hora} (por ${req.usuario.nombre})` } });
+    res.json(await comidas.listar(d.id));
+  } catch (err) {
+    errorConStatus(err, res, next);
+  }
+});
+
+// DELETE /api/dispositivos/:id/comidas/:comida — CA4: eliminar
+router.delete('/:id/comidas/:comida', async (req, res, next) => {
+  try {
+    const d = await baseDeBiberon(req, res);
+    if (!d) return;
+    const { data, error } = await supabase
+      .from('tiempos_comida')
+      .delete()
+      .eq('id', req.params.comida)
+      .eq('dispositivo_id', d.id)
+      .select('hora');
+    if (error && error.code !== '22P02') throw error;
+    if (!data?.length) return res.status(404).json({ error: 'Tiempo de comida no encontrado' });
+    await guardarEvento(d, { tipo: 'comidas', detalle: { mensaje: `Tiempo de comida eliminado: ${data[0].hora.slice(0, 5)} (por ${req.usuario.nombre})` } });
+    res.json(await comidas.listar(d.id));
   } catch (err) {
     errorConStatus(err, res, next);
   }
