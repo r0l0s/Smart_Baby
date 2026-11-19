@@ -168,8 +168,10 @@ router.put('/:id/umbrales', async (req, res, next) => {
 
     const nuevos = {};
     for (const [prefijo, l] of Object.entries(LIMITES_UMBRALES)) {
-      const min = Number(req.body?.[`${prefijo}_min`]);
-      const max = Number(req.body?.[`${prefijo}_max`]);
+      // Ojo: Number('') y Number(null) dan 0, así que un campo vacío se trata como faltante.
+      const numero = (v) => (v === '' || v === null || v === undefined ? NaN : Number(v));
+      const min = numero(req.body?.[`${prefijo}_min`]);
+      const max = numero(req.body?.[`${prefijo}_max`]);
       if (!Number.isFinite(min) || !Number.isFinite(max)) {
         return res.status(400).json({ error: `Ingresa el mínimo y el máximo de ${l.nombre}`, campo: prefijo });
       }
