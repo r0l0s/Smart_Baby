@@ -31,7 +31,7 @@
         @case ('colchon') { <app-controles-colchon [dispositivo]="d" (cambio)="cargar()" /> }
         @case ('seguridad') { <app-controles-seguridad [dispositivo]="d" (cambio)="cargar()" /> }
         @case ('biberon') { <app-controles-biberon [dispositivo]="d" /> }
-        @case ('matriz') { <p class="pendiente">Encender, apagar y velocidad — Incremento 2 (HU-MAT-*).</p> }
+        @case ('matriz') { <app-controles-matriz [dispositivo]="d" (cambio)="cargar()" /> }
       }
     </section>
 

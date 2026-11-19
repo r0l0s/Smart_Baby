@@ -23,6 +23,9 @@
     button:disabled { color: #9aa1ad; cursor: not-allowed; }
     .msg { font-size: .8rem; color: #146c2e; min-height: 1em; margin-top: 6px; }
     .alarma { color: #a1271f; font-weight: 700; }
+    .matriz { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; width: 200px; padding: 10px; margin: 8px 0; background: #111; border-radius: 8px; }
+    .matriz span { aspect-ratio: 1; border-radius: 50%; background: #2a0a0a; }
+    .matriz span.on { background: #ff3b3b; box-shadow: 0 0 6px 2px rgba(255, 60, 60, 0.7); }
   </style>
 </head>
 <body>
@@ -35,6 +38,7 @@
   <div class="grid" id="grid">Cargando…</div>
 
   <script src="sonidos.js"></script>
+  <script src="matriz.js"></script>
   <script>
     // [texto del botón, nombre del escenario]. Escenarios sin implementar quedan deshabilitados.
     const escenarios = {
@@ -61,6 +65,7 @@
         const cuna = lista.find((d) => d.tipo === 'cuna' && d.conectado);
         SonidosCuna.reproducir(cuna?.estado.sonido ?? null);
         document.getElementById('audio-estado').textContent = SonidosCuna.descripcion(cuna?.codigo);
+        lista.filter((d) => d.tipo === 'matriz').forEach((d) => VistaMatriz.actualizar(d.codigo, d.estado));
         document.getElementById('grid').innerHTML = lista.map((d) => `
           <div class="card">
             <h2>${d.codigo}
@@ -68,7 +73,8 @@
             </h2>
             ${d.estado.alarma ? '<div class="alarma">🚨 ALARMA SONANDO</div>' : ''}
             ${Object.entries(d.info || {}).map(([k, v]) => `<div class="info"><b>${k}:</b> ${v}</div>`).join('')}
-            <pre>${JSON.stringify(d.estado, null, 2)}</pre>
+            ${d.tipo === 'matriz' ? `<div class="matriz" data-codigo="${d.codigo}"></div>` : ''}
+            <pre>${JSON.stringify({ ...d.estado, patron: d.estado.patron ? `(${d.estado.patron.length} cuadros)` : undefined }, null, 2)}</pre>
             <div class="botones">
               <button onclick="energia('${d.codigo}', ${d.apagado})">${d.apagado ? '🔌 Encender' : '⏻ Apagar'}</button>
               ${(escenarios[d.tipo] || []).map(([texto, esc]) => esc
@@ -77,6 +83,7 @@
             </div>
             <div class="msg">${mensajes[d.codigo] || ''}</div>
           </div>`).join('');
+        VistaMatriz.dibujar(); // repinta de inmediato tras reconstruir las tarjetas
       } catch {
         document.getElementById('grid').textContent = 'No se pudo contactar al simulador.';
       }

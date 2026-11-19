@@ -17,6 +17,7 @@ import { UmbralesCuna } from './umbrales-cuna';
 import { LuzCuna } from './luz-cuna';
 import { SonidosCuna } from './sonidos-cuna';
 import { ComunicacionCuna } from './comunicacion-cuna';
+import { ControlesMatriz } from './controles-matriz';
 
 const INTERVALO_MS = 3000;
 
@@ -52,6 +53,9 @@ const HISTORIALES: Partial<Record<TipoDispositivo, { titulo: string; filtros: st
   },
 };
 
+// Datos internos del estado que no se muestran en "Estado actual" (la matriz los usa para su vista).
+const OCULTOS = new Set(['patron', 'fase_inicio', 'cuadro_inicio', 'cuenta_hasta']);
+
 // Etiquetas legibles para los valores del estado.
 const ETIQUETAS: Record<string, { texto: string; unidad?: string }> = {
   monitoreo: { texto: 'Monitoreo' },
@@ -67,6 +71,7 @@ const ETIQUETAS: Record<string, { texto: string; unidad?: string }> = {
   peso_base: { texto: 'Peso base', unidad: 'kg' },
   cuenta_hasta: { texto: 'Cuenta regresiva hasta' },
   encendida: { texto: 'Encendida' },
+  origen: { texto: 'Origen' },
   velocidad: { texto: 'Velocidad' },
   activo: { texto: 'Sistema activo' },
   puertaAbierta: { texto: 'Puerta abierta' },
@@ -74,7 +79,7 @@ const ETIQUETAS: Record<string, { texto: string; unidad?: string }> = {
 
 @Component({
   selector: 'app-dispositivo',
-  imports: [Encabezado, GraficasMonitoreo, HistorialEventos, ControlesCuna, ControlesColchon, ControlesSeguridad, ControlesBiberon, UmbralesCuna, LuzCuna, SonidosCuna, ComunicacionCuna],
+  imports: [Encabezado, GraficasMonitoreo, HistorialEventos, ControlesCuna, ControlesColchon, ControlesSeguridad, ControlesBiberon, UmbralesCuna, LuzCuna, SonidosCuna, ComunicacionCuna, ControlesMatriz],
   templateUrl: './dispositivo.html',
   styleUrl: './dispositivo.css',
 })
@@ -130,7 +135,9 @@ export class DispositivoPagina implements OnInit {
   }
 
   protected valores(d: Dispositivo): { etiqueta: string; valor: string }[] {
-    return Object.entries(d.estado).map(([clave, valor]) => {
+    return Object.entries(d.estado)
+      .filter(([clave]) => !OCULTOS.has(clave))
+      .map(([clave, valor]) => {
       const e = ETIQUETAS[clave] ?? { texto: clave };
       let texto: string;
       if (typeof valor === 'boolean') texto = valor ? 'Sí' : 'No';

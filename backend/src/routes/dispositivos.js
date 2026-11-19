@@ -17,6 +17,7 @@ import * as cuna from '../services/cuna.js';
 import * as colchon from '../services/colchon.js';
 import * as seguridad from '../services/seguridad.js';
 import * as biberon from '../services/biberon.js';
+import * as matriz from '../services/matriz.js';
 import { config } from '../config.js';
 
 const router = Router();
@@ -293,6 +294,34 @@ router.post('/:id/comunicacion', async (req, res, next) => {
     if (!vivo?.online) return res.status(409).json({ error: 'La cuna está fuera de línea. Revisa que esté encendida.' });
     if (typeof req.body?.activo !== 'boolean') return res.status(400).json({ error: 'Indica si se inicia o se finaliza' });
     res.json(await cuna.cambiarComunicacion(d, req.usuario, vivo, req.body.activo));
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/dispositivos/:id/matriz  { encendida?: boolean, velocidad?: 'lenta'|'media'|'rapida' }
+// HU-MAT-01 / HU-MAT-02. Lo que no se envía se mantiene. Responde con lo que confirmó la matriz.
+router.post('/:id/matriz', async (req, res, next) => {
+  try {
+    const d = await dispositivoDelAmbiente(req, res);
+    if (!d) return;
+    if (d.tipo !== 'matriz') return res.status(400).json({ error: 'Este dispositivo no es una matriz LED' });
+    const vivo = estadoEnVivo(d.codigo);
+    if (!vivo?.online) return res.status(409).json({ error: 'La matriz está fuera de línea. Revisa que esté encendida.' });
+
+    const { encendida, velocidad } = req.body ?? {};
+    if (encendida !== undefined && typeof encendida !== 'boolean') {
+      return res.status(400).json({ error: 'Indica si la matriz debe encenderse o apagarse' });
+    }
+    if (velocidad !== undefined && !matriz.VELOCIDADES.includes(velocidad)) {
+      return res.status(400).json({ error: 'La velocidad debe ser lenta, media o rápida' });
+    }
+    const objetivo = {
+      encendida: encendida ?? !!vivo.encendida,
+      velocidad: velocidad ?? vivo.velocidad ?? 'media',
+      origen: 'manual',
+    };
+    res.json(await matriz.cambiarMatriz(d, objetivo, `por ${req.usuario.nombre}`));
   } catch (err) {
     next(err);
   }
