@@ -35,6 +35,13 @@
       }
     </section>
 
+    @if (d.tipo === 'biberon') {
+      <section class="tarjeta-seccion">
+        <h2>⏱️ Sesión de alimentación</h2>
+        <app-sesion-alimentacion [dispositivo]="d" />
+      </section>
+    }
+
     @if (d.tipo === 'matriz') {
       <section class="tarjeta-seccion">
         <h2>⏰ Horario</h2>

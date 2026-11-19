@@ -19,6 +19,7 @@ import * as seguridad from '../services/seguridad.js';
 import * as biberon from '../services/biberon.js';
 import * as matriz from '../services/matriz.js';
 import * as horarioMatriz from '../services/horarioMatriz.js';
+import * as alimentacion from '../services/alimentacion.js';
 import { config } from '../config.js';
 
 const router = Router();
@@ -442,6 +443,60 @@ router.delete('/:id/horario', async (req, res, next) => {
     res.json({ horario: null });
   } catch (err) {
     next(err);
+  }
+});
+
+// ---- Sesiones de alimentación (HU-ALI-02) — base de biberón ----
+async function baseDeBiberon(req, res) {
+  const d = await dispositivoDelAmbiente(req, res);
+  if (d && d.tipo !== 'biberon') {
+    res.status(400).json({ error: 'Las sesiones de alimentación son de la base de biberón' });
+    return null;
+  }
+  return d;
+}
+function errorConStatus(err, res, next) {
+  if (err.status && err.status < 500) return res.status(err.status).json({ error: err.message });
+  next(err);
+}
+
+// GET /api/dispositivos/:id/alimentacion/actual — sesión en curso o pendiente de cantidad (o null)
+router.get('/:id/alimentacion/actual', async (req, res, next) => {
+  try {
+    const d = await baseDeBiberon(req, res);
+    if (d) res.json({ sesion: await alimentacion.sesionAbierta(d.id) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/dispositivos/:id/alimentacion/iniciar — CA1: empieza a cronometrar
+router.post('/:id/alimentacion/iniciar', async (req, res, next) => {
+  try {
+    const d = await baseDeBiberon(req, res);
+    if (d) res.json({ sesion: await alimentacion.iniciar(d) });
+  } catch (err) {
+    errorConStatus(err, res, next);
+  }
+});
+
+// POST /api/dispositivos/:id/alimentacion/finalizar — CA2: guarda la duración y pide la cantidad
+router.post('/:id/alimentacion/finalizar', async (req, res, next) => {
+  try {
+    const d = await baseDeBiberon(req, res);
+    if (d) res.json({ sesion: await alimentacion.finalizar(d) });
+  } catch (err) {
+    errorConStatus(err, res, next);
+  }
+});
+
+// POST /api/dispositivos/:id/alimentacion/:sesion/cantidad  { cantidad_ml }  — CA3 / CA4
+router.post('/:id/alimentacion/:sesion/cantidad', async (req, res, next) => {
+  try {
+    const d = await baseDeBiberon(req, res);
+    if (d) res.json({ sesion: await alimentacion.registrarCantidad(d, req.params.sesion, req.body?.cantidad_ml, req.usuario) });
+  } catch (err) {
+    errorConStatus(err, res, next);
   }
 });
 

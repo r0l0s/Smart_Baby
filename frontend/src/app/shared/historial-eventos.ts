@@ -25,6 +25,7 @@ const NOMBRES: Record<string, string> = {
   movimiento: '📷 Movimiento detectado',
   apertura_puerta: '🚪 Apertura de puerta',
   medicion: '🍼 Temperatura de la leche',
+  alimentacion: '⏱️ Sesión de alimentación',
   luz: '💡 Luz de noche',
   sonido: '🎵 Sonido',
   audio: '📞 Comunicación con el bebé',
