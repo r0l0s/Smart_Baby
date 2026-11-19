@@ -27,6 +27,7 @@ const NOMBRES: Record<string, string> = {
   medicion: '🍼 Temperatura de la leche',
   luz: '💡 Luz de noche',
   sonido: '🎵 Sonido',
+  audio: '📞 Comunicación con el bebé',
 };
 
 const INTERVALO_MS = 3000;

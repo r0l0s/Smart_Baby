@@ -195,7 +195,7 @@ export function nombreSonido(id) {
 export async function cambiarSonido(dispositivo, usuario, estadoActual, sonido) {
   if (sonido && estadoActual.audio_activo) {
     throw Object.assign(
-      new Error('No se pueden reproducir sonidos mientras la comunicación de audio está activa. Finaliza la llamada primero.'),
+      new Error('No se pueden reproducir sonidos mientras la comunicación de audio está activa. Finaliza la comunicación primero.'),
       { status: 409 },
     );
   }
@@ -215,6 +215,32 @@ export async function cambiarSonido(dispositivo, usuario, estadoActual, sonido) 
     },
   });
   return { sonido: estado.sonido ?? null };
+}
+
+// ---- Comunicación con el bebé: inicio y fin de la llamada (señalización) ----
+// La llamada siempre la inicia o finaliza la plataforma; la cuna solo obedece y lo confirma.
+// Mientras está activa no se pueden reproducir sonidos (HU-CUN-09 CA3) y viceversa (HU-CUN-10 CA3).
+// El canal de audio en sí (micrófono ↔ parlante por WebSocket) se agrega en HU-CUN-10.
+export async function cambiarComunicacion(dispositivo, usuario, estadoActual, activo) {
+  if (activo && estadoActual.sonido) {
+    throw Object.assign(
+      new Error('No se puede iniciar la comunicación mientras suena un sonido. Detén el sonido primero.'),
+      { status: 409 },
+    );
+  }
+  const estado = await comandoConConfirmacion(
+    dispositivo.codigo,
+    { accion: 'audio', activo },
+    (e) => e.audio_activo === activo,
+  );
+  if (!estado) {
+    throw Object.assign(new Error('La cuna no confirmó la comunicación. Revisa que esté encendida.'), { status: 504 });
+  }
+  await guardarEvento(dispositivo, {
+    tipo: 'audio',
+    detalle: { mensaje: `Comunicación ${activo ? 'iniciada' : 'finalizada'} por ${usuario.nombre}`, activo },
+  });
+  return { audio_activo: estado.audio_activo };
 }
 
 // Cambios hechos a mano en la cuna (CA3): la cuna publica el evento "luz" y su nuevo estado.

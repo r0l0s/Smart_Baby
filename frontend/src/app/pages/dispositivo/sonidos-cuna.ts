@@ -9,7 +9,7 @@ import { Dispositivo } from '../../core/dispositivos';
   template: `
     @let d = dispositivo();
     @if (audioActivo()) {
-      <div class="aviso">📞 Hay una comunicación de audio activa: los sonidos no se pueden reproducir hasta que termine.</div>
+      <div class="aviso">📞 Hay una comunicación de audio activa: los sonidos no se pueden reproducir hasta que la finalices.</div>
     }
     <p class="estado">{{ sonando() ? '🔊 Sonando: ' + nombre(sonando()!) : '🔈 Sin sonido' }}</p>
     <div class="sonidos" role="group" aria-label="Sonidos disponibles">

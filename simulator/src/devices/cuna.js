@@ -80,6 +80,12 @@ class Cuna extends DispositivoSimulado {
         this.publicarEstado();
         console.log(`[${this.codigo}] sonido: ${this.estado.sonido ?? 'ninguno'}`);
         break;
+      case 'audio': // la plataforma inicia o finaliza la comunicación con el bebé
+        this.estado.audio_activo = comando.activo === true;
+        if (this.estado.audio_activo) this.estado.sonido = null; // audio y sonidos son excluyentes
+        this.publicarEstado();
+        console.log(`[${this.codigo}] comunicación de audio ${this.estado.audio_activo ? 'INICIADA' : 'FINALIZADA'} (desde la plataforma)`);
+        break;
       default:
         super.manejarComando(comando);
     }
@@ -121,13 +127,6 @@ class Cuna extends DispositivoSimulado {
         this.estado.luz_nivel = (this.estado.luz_nivel % 3) + 1;
       });
     }
-    if (nombre === 'llamada') {
-      // Provisional hasta HU-CUN-10: simula que hay una comunicación de audio activa.
-      this.estado.audio_activo = !this.estado.audio_activo;
-      if (this.estado.audio_activo) this.estado.sonido = null; // audio y sonidos son excluyentes
-      this.publicarEstado();
-      return this.estado.audio_activo ? 'Llamada de audio simulada ACTIVA' : 'Llamada de audio simulada terminada';
-    }
     if (nombre === 'movimiento') return this.detectarMovimiento() ? 'Movimiento registrado' : 'Monitoreo apagado: no se registra';
     const cambio = ESCENARIOS[nombre];
     if (!cambio) return 'Escenario desconocido';
@@ -143,7 +142,7 @@ class Cuna extends DispositivoSimulado {
         ? '💡 ' + '●'.repeat(this.estado.luz_nivel) + '○'.repeat(3 - this.estado.luz_nivel) + ` (nivel ${this.estado.luz_nivel})`
         : '⚫ apagada',
       sonido: this.estado.sonido ? '🎵 ' + (NOMBRES_SONIDOS[this.estado.sonido] ?? this.estado.sonido) : 'ninguno',
-      ...(this.estado.audio_activo && { audio: '📞 comunicación de audio activa' }),
+      ...(this.estado.audio_activo && { audio: '📞 comunicación activa (iniciada desde la plataforma)' }),
     };
   }
 }

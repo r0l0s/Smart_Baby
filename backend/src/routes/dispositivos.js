@@ -282,6 +282,22 @@ router.post('/:id/sonido', async (req, res, next) => {
   }
 });
 
+// POST /api/dispositivos/:id/comunicacion  { activo: true|false }
+// Inicia o finaliza la comunicación con el bebé (la llamada siempre la origina la plataforma).
+router.post('/:id/comunicacion', async (req, res, next) => {
+  try {
+    const d = await dispositivoDelAmbiente(req, res);
+    if (!d) return;
+    if (d.tipo !== 'cuna') return res.status(400).json({ error: 'Solo la cuna tiene comunicación de audio' });
+    const vivo = estadoEnVivo(d.codigo);
+    if (!vivo?.online) return res.status(409).json({ error: 'La cuna está fuera de línea. Revisa que esté encendida.' });
+    if (typeof req.body?.activo !== 'boolean') return res.status(400).json({ error: 'Indica si se inicia o se finaliza' });
+    res.json(await cuna.cambiarComunicacion(d, req.usuario, vivo, req.body.activo));
+  } catch (err) {
+    next(err);
+  }
+});
+
 // POST /api/dispositivos/:id/medir — base de biberón: medir la temperatura de la leche (HU-ALI-01)
 router.post('/:id/medir', async (req, res, next) => {
   try {

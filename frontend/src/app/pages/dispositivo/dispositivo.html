@@ -44,6 +44,10 @@
         <h2>🎵 Sonidos</h2>
         <app-sonidos-cuna [dispositivo]="d" (cambio)="cargar()" />
       </section>
+      <section class="tarjeta-seccion">
+        <h2>📞 Comunicación con el bebé</h2>
+        <app-comunicacion-cuna [dispositivo]="d" (cambio)="cargar()" />
+      </section>
     }
 
     @if (d.tipo === 'cuna') {

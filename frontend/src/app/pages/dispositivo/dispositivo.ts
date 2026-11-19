@@ -16,6 +16,7 @@ import { ControlesBiberon } from './controles-biberon';
 import { UmbralesCuna } from './umbrales-cuna';
 import { LuzCuna } from './luz-cuna';
 import { SonidosCuna } from './sonidos-cuna';
+import { ComunicacionCuna } from './comunicacion-cuna';
 
 const INTERVALO_MS = 3000;
 
@@ -73,7 +74,7 @@ const ETIQUETAS: Record<string, { texto: string; unidad?: string }> = {
 
 @Component({
   selector: 'app-dispositivo',
-  imports: [Encabezado, GraficasMonitoreo, HistorialEventos, ControlesCuna, ControlesColchon, ControlesSeguridad, ControlesBiberon, UmbralesCuna, LuzCuna, SonidosCuna],
+  imports: [Encabezado, GraficasMonitoreo, HistorialEventos, ControlesCuna, ControlesColchon, ControlesSeguridad, ControlesBiberon, UmbralesCuna, LuzCuna, SonidosCuna, ComunicacionCuna],
   templateUrl: './dispositivo.html',
   styleUrl: './dispositivo.css',
 })
