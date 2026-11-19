@@ -12,6 +12,7 @@ import dispositivosRouter from './routes/dispositivos.js';
 import iotRouter from './routes/iot.js';
 import { requiereSesion } from './middleware/auth.js';
 import { iniciarConsultaPeriodica } from './services/cuna.js';
+import { iniciarHorarios } from './services/horarioMatriz.js';
 
 if (!config.jwtSecret) {
   console.error('[api] Falta JWT_SECRET en backend/.env — no se puede iniciar sesión sin él');
@@ -36,6 +37,7 @@ app.use(manejarErrores);
 await iniciarBroker(config.mqttPort);
 iniciarBot();
 iniciarConsultaPeriodica(); // cuna: pide datos cada INTERVALO_CUNA_SEG (10 s en demo)
+iniciarHorarios(); // matriz: enciende y apaga según su horario diario
 prepararStorage().catch((err) => console.error('[supabase]', err.message));
 
 app.listen(config.port, '0.0.0.0', () => {

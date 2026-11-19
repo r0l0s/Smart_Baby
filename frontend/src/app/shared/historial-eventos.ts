@@ -29,6 +29,7 @@ const NOMBRES: Record<string, string> = {
   sonido: '🎵 Sonido',
   audio: '📞 Comunicación con el bebé',
   matriz: '💡 Matriz LED',
+  horario: '⏰ Horario de la matriz',
 };
 
 const INTERVALO_MS = 3000;

@@ -18,6 +18,7 @@ import * as colchon from '../services/colchon.js';
 import * as seguridad from '../services/seguridad.js';
 import * as biberon from '../services/biberon.js';
 import * as matriz from '../services/matriz.js';
+import * as horarioMatriz from '../services/horarioMatriz.js';
 import { config } from '../config.js';
 
 const router = Router();
@@ -319,10 +320,73 @@ router.post('/:id/matriz', async (req, res, next) => {
     const objetivo = {
       encendida: encendida ?? !!vivo.encendida,
       velocidad: velocidad ?? vivo.velocidad ?? 'media',
-      origen: 'manual',
+      // Encender o apagar a mano = control manual (prevalece sobre el horario, HU-MAT-01 CA3).
+      // Cambiar solo la velocidad no le quita el control al horario.
+      origen: encendida !== undefined ? 'manual' : vivo.origen ?? 'manual',
     };
     res.json(await matriz.cambiarMatriz(d, objetivo, `por ${req.usuario.nombre}`, vivo));
   } catch (err) {
+    next(err);
+  }
+});
+
+// ---- Horario de la matriz (HU-MAT-03 / HU-MAT-04) ----
+async function horarioDe(dispositivoId) {
+  const { data, error } = await supabase
+    .from('horarios_matriz')
+    .select('id, hora_inicio, duracion_min, velocidad')
+    .eq('dispositivo_id', dispositivoId)
+    .maybeSingle();
+  if (error) throw error;
+  return data && { ...data, hora_inicio: data.hora_inicio.slice(0, 5) };
+}
+
+function horarioPublico(h) {
+  if (!h) return { horario: null };
+  const s = horarioMatriz.situacion(h);
+  return { horario: h, en_curso: s.dentro, proximo_inicio: s.inicio, proximo_fin: s.fin };
+}
+
+// GET /api/dispositivos/:id/horario — el horario de la matriz (o null) y su próxima ventana
+router.get('/:id/horario', async (req, res, next) => {
+  try {
+    const d = await dispositivoDelAmbiente(req, res);
+    if (!d) return;
+    if (d.tipo !== 'matriz') return res.status(400).json({ error: 'Solo la matriz LED tiene horario' });
+    res.json(horarioPublico(await horarioDe(d.id)));
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/dispositivos/:id/horario  { hora_inicio: "HH:MM", duracion_min, velocidad }
+// CA1: registra el horario. CA3: si ya existe uno, lo rechaza.
+router.post('/:id/horario', async (req, res, next) => {
+  try {
+    const d = await dispositivoDelAmbiente(req, res);
+    if (!d) return;
+    if (d.tipo !== 'matriz') return res.status(400).json({ error: 'Solo la matriz LED tiene horario' });
+    if (await horarioDe(d.id)) {
+      return res.status(409).json({ error: 'Ya existe un horario. Modifica o elimina el horario existente para cambiarlo.' });
+    }
+    const datos = horarioMatriz.validarHorario(req.body);
+    const { data, error } = await supabase
+      .from('horarios_matriz')
+      .insert({ dispositivo_id: d.id, ...datos })
+      .select('id')
+      .single();
+    if (error) {
+      if (error.code === '23505') return res.status(409).json({ error: 'Ya existe un horario. Modifica o elimina el horario existente para cambiarlo.' });
+      throw error;
+    }
+    horarioMatriz.reiniciarHorario(data.id);
+    await guardarEvento(d, {
+      tipo: 'horario',
+      detalle: { mensaje: `Horario creado por ${req.usuario.nombre}: todos los días a las ${datos.hora_inicio} durante ${datos.duracion_min} min (velocidad ${{ lenta: 'lenta', media: 'media', rapida: 'rápida' }[datos.velocidad]})`, ...datos },
+    });
+    res.status(201).json(horarioPublico(await horarioDe(d.id)));
+  } catch (err) {
+    if (err.status === 400) return res.status(400).json({ error: err.message, campo: err.campo });
     next(err);
   }
 });

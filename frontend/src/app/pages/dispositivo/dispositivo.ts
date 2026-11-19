@@ -18,6 +18,7 @@ import { LuzCuna } from './luz-cuna';
 import { SonidosCuna } from './sonidos-cuna';
 import { ComunicacionCuna } from './comunicacion-cuna';
 import { ControlesMatriz } from './controles-matriz';
+import { HorarioMatriz } from './horario-matriz';
 
 const INTERVALO_MS = 3000;
 
@@ -79,7 +80,7 @@ const ETIQUETAS: Record<string, { texto: string; unidad?: string }> = {
 
 @Component({
   selector: 'app-dispositivo',
-  imports: [Encabezado, GraficasMonitoreo, HistorialEventos, ControlesCuna, ControlesColchon, ControlesSeguridad, ControlesBiberon, UmbralesCuna, LuzCuna, SonidosCuna, ComunicacionCuna, ControlesMatriz],
+  imports: [Encabezado, GraficasMonitoreo, HistorialEventos, ControlesCuna, ControlesColchon, ControlesSeguridad, ControlesBiberon, UmbralesCuna, LuzCuna, SonidosCuna, ComunicacionCuna, ControlesMatriz, HorarioMatriz],
   templateUrl: './dispositivo.html',
   styleUrl: './dispositivo.css',
 })

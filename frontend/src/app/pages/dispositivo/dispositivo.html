@@ -35,6 +35,13 @@
       }
     </section>
 
+    @if (d.tipo === 'matriz') {
+      <section class="tarjeta-seccion">
+        <h2>⏰ Horario</h2>
+        <app-horario-matriz [dispositivo]="d" />
+      </section>
+    }
+
     @if (d.tipo === 'cuna') {
       <section class="tarjeta-seccion">
         <h2>💡 Luz de noche</h2>
