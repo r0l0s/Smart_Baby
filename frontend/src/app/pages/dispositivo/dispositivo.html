@@ -40,6 +40,10 @@
         <h2>⏱️ Sesión de alimentación</h2>
         <app-sesion-alimentacion [dispositivo]="d" />
       </section>
+      <section class="tarjeta-seccion">
+        <h2>📊 Historial de alimentación</h2>
+        <app-historial-alimentacion [dispositivo]="d" />
+      </section>
     }
 
     @if (d.tipo === 'matriz') {

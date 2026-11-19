@@ -470,6 +470,19 @@ router.get('/:id/alimentacion/actual', async (req, res, next) => {
   }
 });
 
+// GET /api/dispositivos/:id/alimentacion/sesiones?dias=7  (0 = todas) — HU-ALI-03
+router.get('/:id/alimentacion/sesiones', async (req, res, next) => {
+  try {
+    const d = await baseDeBiberon(req, res);
+    if (!d) return;
+    const dias = Number(req.query.dias ?? 7);
+    const desde = dias > 0 ? new Date(Date.now() - dias * 86400000).toISOString() : null;
+    res.json({ desde, sesiones: await alimentacion.sesionesCompletas(d.id, desde) });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // POST /api/dispositivos/:id/alimentacion/iniciar — CA1: empieza a cronometrar
 router.post('/:id/alimentacion/iniciar', async (req, res, next) => {
   try {

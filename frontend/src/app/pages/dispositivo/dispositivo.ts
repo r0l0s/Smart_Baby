@@ -20,6 +20,7 @@ import { ComunicacionCuna } from './comunicacion-cuna';
 import { ControlesMatriz } from './controles-matriz';
 import { HorarioMatriz } from './horario-matriz';
 import { SesionAlimentacion } from './sesion-alimentacion';
+import { HistorialAlimentacion } from './historial-alimentacion';
 
 const INTERVALO_MS = 3000;
 
@@ -81,7 +82,7 @@ const ETIQUETAS: Record<string, { texto: string; unidad?: string }> = {
 
 @Component({
   selector: 'app-dispositivo',
-  imports: [Encabezado, GraficasMonitoreo, HistorialEventos, ControlesCuna, ControlesColchon, ControlesSeguridad, ControlesBiberon, UmbralesCuna, LuzCuna, SonidosCuna, ComunicacionCuna, ControlesMatriz, HorarioMatriz, SesionAlimentacion],
+  imports: [Encabezado, GraficasMonitoreo, HistorialEventos, ControlesCuna, ControlesColchon, ControlesSeguridad, ControlesBiberon, UmbralesCuna, LuzCuna, SonidosCuna, ComunicacionCuna, ControlesMatriz, HorarioMatriz, SesionAlimentacion, HistorialAlimentacion],
   templateUrl: './dispositivo.html',
   styleUrl: './dispositivo.css',
 })

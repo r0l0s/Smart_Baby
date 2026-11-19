@@ -44,7 +44,10 @@ export class Grafica {
   desde = input.required<string>();
   /** null = monitoreo activo → el eje X llega hasta ahora */
   hasta = input<string | null>(null);
-  estilo = input<'linea' | 'puntos'>('linea');
+  /** linea = valores continuos; puntos = detecciones; sesiones = un punto grande por sesión, eje Y desde 0 */
+  estilo = input<'linea' | 'puntos' | 'sesiones'>('linea');
+  /** Título del eje X */
+  ejeX = input('Hora');
   color = input('#3b6fd8');
   /** Valores que se muestran en vez del número en el tooltip (ej. 1 → "Movimiento detectado") */
   textoValor = input<((v: number) => string) | null>(null);
@@ -60,8 +63,8 @@ export class Grafica {
           backgroundColor: this.color(),
           borderWidth: 2,
           showLine: !esPuntos,
-          pointRadius: esPuntos ? 6 : 2,
-          pointHoverRadius: esPuntos ? 8 : 5,
+          pointRadius: esPuntos || this.estilo() === 'sesiones' ? 6 : 2,
+          pointHoverRadius: esPuntos || this.estilo() === 'sesiones' ? 8 : 5,
           tension: 0.2,
         },
       ],
@@ -98,12 +101,13 @@ export class Grafica {
           max: fin,
           adapters: { date: { locale: es } },
           time: { displayFormats: { second: 'HH:mm:ss', minute: 'HH:mm', hour: 'dd/MM HH:mm', day: 'dd/MM' } },
-          title: { display: true, text: 'Hora' },
+          title: { display: true, text: this.ejeX() },
           ticks: { maxRotation: 0, autoSkipPadding: 16 },
         },
         y: {
           title: { display: true, text: this.ejeY() },
           ...(esPuntos ? { min: 0, max: 2, ticks: { display: false }, grid: { display: false } } : {}),
+          ...(this.estilo() === 'sesiones' ? { beginAtZero: true } : {}),
         },
       },
     };

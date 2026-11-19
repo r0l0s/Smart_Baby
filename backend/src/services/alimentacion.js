@@ -95,6 +95,25 @@ export async function registrarCantidad(dispositivo, sesionId, valor, usuario) {
   return conEstado(data);
 }
 
+/**
+ * Sesiones completas (con duración y cantidad) desde una fecha, en orden cronológico (HU-ALI-03).
+ * @param {string|null} desde fecha ISO, o null para todas
+ */
+export async function sesionesCompletas(dispositivoId, desde) {
+  let consulta = supabase
+    .from('sesiones_alimentacion')
+    .select('id, inicio, duracion_seg, cantidad_ml')
+    .eq('dispositivo_id', dispositivoId)
+    .not('duracion_seg', 'is', null)
+    .not('cantidad_ml', 'is', null)
+    .order('inicio', { ascending: true })
+    .limit(2000);
+  if (desde) consulta = consulta.gte('inicio', desde);
+  const { data, error } = await consulta;
+  if (error) throw error;
+  return data.map((s) => ({ ...s, cantidad_ml: Number(s.cantidad_ml) }));
+}
+
 export function textoDuracion(seg) {
   const m = Math.floor(seg / 60);
   const s = seg % 60;
