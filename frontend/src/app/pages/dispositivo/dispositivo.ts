@@ -34,10 +34,19 @@ const SERIES: Partial<Record<TipoDispositivo, SerieGrafica[]>> = {
   colchon: [{ tipo: 'peso', titulo: 'Peso', ejeY: 'Peso (kg)', color: '#2e8b57' }],
 };
 
-// Tipos de evento que se pueden filtrar en el historial de cada dispositivo.
+// Historial propio de algunos dispositivos: título y tipos de evento que se pueden filtrar.
 // HU-COL-04: el colchón lista activaciones, desactivaciones y alarmas (decremento / incremento).
-const FILTROS_HISTORIAL: Partial<Record<TipoDispositivo, string[]>> = {
-  colchon: ['activacion', 'desactivacion', 'alarma_decremento', 'alarma_incremento'],
+// HU-SEG-04: el sistema de seguridad lista activaciones, desactivaciones, movimientos (con foto) y puertas.
+// Ambos historiales se muestran en orden cronológico por defecto.
+const HISTORIALES: Partial<Record<TipoDispositivo, { titulo: string; filtros: string[] }>> = {
+  colchon: {
+    titulo: 'Historial del colchón',
+    filtros: ['activacion', 'desactivacion', 'alarma_decremento', 'alarma_incremento'],
+  },
+  seguridad: {
+    titulo: 'Historial de seguridad',
+    filtros: ['activacion', 'desactivacion', 'movimiento', 'apertura_puerta'],
+  },
 };
 
 // Etiquetas legibles para los valores del estado.
@@ -76,7 +85,7 @@ export class DispositivoPagina implements OnInit {
   protected error = signal('');
   protected infoTipo = infoTipo;
   protected series = SERIES;
-  protected filtrosHistorial = FILTROS_HISTORIAL;
+  protected historiales = HISTORIALES;
 
   constructor() {
     const temporizador = setInterval(() => this.cargar(), INTERVALO_MS);
