@@ -32,7 +32,7 @@ const NOMBRE_VELOCIDAD: Record<string, string> = { lenta: 'Lenta', media: 'Media
                 [disabled]="enviando() || !d.online">
           {{ enviando() ? 'Un momento…' : encendida() ? 'Apagar matriz' : 'Encender matriz' }}
         </button>
-        <p class="nota">La vista muestra en tiempo real el patrón que está mostrando la matriz.</p>
+        <p class="nota">Estos botones cambian la matriz <strong>ahora</strong>. La velocidad del horario se elige en <strong>⏰ Horario</strong>. La vista muestra en tiempo real el patrón de la matriz.</p>
       </div>
     </div>
     @if (error()) {

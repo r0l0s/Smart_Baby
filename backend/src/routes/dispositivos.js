@@ -391,6 +391,62 @@ router.post('/:id/horario', async (req, res, next) => {
   }
 });
 
+// Si la matriz está encendida POR EL HORARIO, se apaga (al modificar o eliminar el horario).
+// Si la nueva ventana incluye la hora actual, el programador la vuelve a encender en ≤ 15 s.
+async function apagarSiEncendidaPorHorario(d, motivo) {
+  const vivo = estadoEnVivo(d.codigo);
+  if (vivo?.online && vivo.encendida && vivo.origen === 'horario') {
+    await matriz.cambiarMatriz(d, { encendida: false, velocidad: vivo.velocidad, origen: 'horario' }, motivo, vivo);
+  }
+}
+
+// PUT /api/dispositivos/:id/horario  { hora_inicio, duracion_min, velocidad }   (HU-MAT-04 CA2)
+// Mismas validaciones que al crearlo.
+router.put('/:id/horario', async (req, res, next) => {
+  try {
+    const d = await dispositivoDelAmbiente(req, res);
+    if (!d) return;
+    if (d.tipo !== 'matriz') return res.status(400).json({ error: 'Solo la matriz LED tiene horario' });
+    const actual = await horarioDe(d.id);
+    if (!actual) return res.status(404).json({ error: 'No hay un horario para modificar' });
+    const datos = horarioMatriz.validarHorario(req.body);
+    const { error } = await supabase.from('horarios_matriz').update(datos).eq('id', actual.id);
+    if (error) throw error;
+    horarioMatriz.reiniciarHorario(actual.id);
+    await apagarSiEncendidaPorHorario(d, '(el horario se modificó)');
+    await guardarEvento(d, {
+      tipo: 'horario',
+      detalle: {
+        mensaje: `Horario modificado por ${req.usuario.nombre}: todos los días a las ${datos.hora_inicio} durante ${datos.duracion_min} min (velocidad ${{ lenta: 'lenta', media: 'media', rapida: 'rápida' }[datos.velocidad]})`,
+        ...datos,
+      },
+    });
+    res.json(horarioPublico(await horarioDe(d.id)));
+  } catch (err) {
+    if (err.status === 400) return res.status(400).json({ error: err.message, campo: err.campo });
+    next(err);
+  }
+});
+
+// DELETE /api/dispositivos/:id/horario — la matriz deja de encenderse por horario (HU-MAT-04 CA3)
+router.delete('/:id/horario', async (req, res, next) => {
+  try {
+    const d = await dispositivoDelAmbiente(req, res);
+    if (!d) return;
+    if (d.tipo !== 'matriz') return res.status(400).json({ error: 'Solo la matriz LED tiene horario' });
+    const actual = await horarioDe(d.id);
+    if (!actual) return res.status(404).json({ error: 'No hay un horario para eliminar' });
+    const { error } = await supabase.from('horarios_matriz').delete().eq('id', actual.id);
+    if (error) throw error;
+    horarioMatriz.reiniciarHorario(actual.id);
+    await apagarSiEncendidaPorHorario(d, '(el horario se eliminó)');
+    await guardarEvento(d, { tipo: 'horario', detalle: { mensaje: `Horario eliminado por ${req.usuario.nombre}` } });
+    res.json({ horario: null });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // POST /api/dispositivos/:id/medir — base de biberón: medir la temperatura de la leche (HU-ALI-01)
 router.post('/:id/medir', async (req, res, next) => {
   try {
