@@ -37,6 +37,13 @@
 
     @if (d.tipo === 'cuna') {
       <section class="tarjeta-seccion">
+        <h2>💡 Luz de noche</h2>
+        <app-luz-cuna [dispositivo]="d" (cambio)="cargar()" />
+      </section>
+    }
+
+    @if (d.tipo === 'cuna') {
+      <section class="tarjeta-seccion">
         <h2>Rangos de alerta</h2>
         <app-umbrales-cuna [dispositivo]="d" (cambio)="cargar()" />
       </section>

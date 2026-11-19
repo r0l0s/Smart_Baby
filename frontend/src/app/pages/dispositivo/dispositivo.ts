@@ -14,6 +14,7 @@ import { ControlesColchon } from './controles-colchon';
 import { ControlesSeguridad } from './controles-seguridad';
 import { ControlesBiberon } from './controles-biberon';
 import { UmbralesCuna } from './umbrales-cuna';
+import { LuzCuna } from './luz-cuna';
 
 const INTERVALO_MS = 3000;
 
@@ -54,7 +55,8 @@ const ETIQUETAS: Record<string, { texto: string; unidad?: string }> = {
   monitoreo: { texto: 'Monitoreo' },
   temperatura: { texto: 'Temperatura', unidad: '°C' },
   humedad: { texto: 'Humedad', unidad: '%' },
-  luz: { texto: 'Luz (nivel)' },
+  luz_encendida: { texto: 'Luz encendida' },
+  luz_nivel: { texto: 'Nivel de luz' },
   sonido: { texto: 'Sonido' },
   peso: { texto: 'Peso', unidad: 'kg' },
   alarma: { texto: 'Alarma sonando' },
@@ -69,7 +71,7 @@ const ETIQUETAS: Record<string, { texto: string; unidad?: string }> = {
 
 @Component({
   selector: 'app-dispositivo',
-  imports: [Encabezado, GraficasMonitoreo, HistorialEventos, ControlesCuna, ControlesColchon, ControlesSeguridad, ControlesBiberon, UmbralesCuna],
+  imports: [Encabezado, GraficasMonitoreo, HistorialEventos, ControlesCuna, ControlesColchon, ControlesSeguridad, ControlesBiberon, UmbralesCuna, LuzCuna],
   templateUrl: './dispositivo.html',
   styleUrl: './dispositivo.css',
 })

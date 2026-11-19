@@ -30,7 +30,12 @@ export async function iniciarBroker(puerto) {
 
     if (tipoMensaje === 'estado') {
       const antes = estados.get(codigo);
-      estados.set(codigo, { ...(antes || {}), ...datos, actualizado: new Date().toISOString() });
+      // Un estado completo (online) reemplaza al anterior; el aviso "fuera de línea" (Last-Will,
+      // solo trae online:false) se combina para conservar los últimos datos conocidos.
+      const base = datos.online ? {} : antes || {};
+      estados.set(codigo, { ...base, ...datos, actualizado: new Date().toISOString() });
+      // Avisa a quien esté esperando un cambio de estado de este dispositivo.
+      for (const espera of [...(esperas.get(codigo) ?? [])]) espera(estados.get(codigo));
       if (!antes || antes.online !== datos.online) {
         console.log(`[mqtt] ${codigo} → ${datos.online ? 'en línea' : 'fuera de línea'}`);
         if (datos.online) {
@@ -75,6 +80,32 @@ export function enviarComando(codigo, comando) {
     { topic: `dispositivos/${codigo}/comandos`, payload: Buffer.from(JSON.stringify(comando)), qos: 1, retain: false },
     () => {},
   );
+}
+
+// Funciones que esperan un cambio de estado: codigo → Set<función>
+const esperas = new Map();
+
+/**
+ * Envía un comando y espera a que el dispositivo publique un estado que cumpla `condicion`.
+ * Así la plataforma muestra el estado REAL del dispositivo, no solo lo que se pidió.
+ * @returns {Promise<object|null>} el estado confirmado, o null si no llegó a tiempo
+ */
+export function comandoConConfirmacion(codigo, comando, condicion, ms = 3000) {
+  return new Promise((resolve) => {
+    const lista = esperas.get(codigo) ?? new Set();
+    esperas.set(codigo, lista);
+    const terminar = (resultado) => {
+      clearTimeout(temporizador);
+      lista.delete(revisar);
+      resolve(resultado);
+    };
+    const revisar = (estado) => {
+      if (estado && condicion(estado)) terminar(estado);
+    };
+    const temporizador = setTimeout(() => terminar(null), ms);
+    lista.add(revisar);
+    enviarComando(codigo, comando);
+  });
 }
 
 export function clientesConectados() {

@@ -10,7 +10,7 @@
 import cron from 'node-cron';
 import { supabase } from '../db.js';
 import { config } from '../config.js';
-import { enviarComando } from '../mqtt/broker.js';
+import { enviarComando, comandoConConfirmacion } from '../mqtt/broker.js';
 import { registrarManejador } from '../mqtt/handlers.js';
 import { guardarEvento, iniciarMonitoreo, finalizarMonitoreo, monitoreoActivo } from './registro.js';
 import { formatearNotificacion, notificarAmbiente } from '../telegram/notificar.js';
@@ -150,4 +150,44 @@ function alConectarse(dispositivo, monitoreo) {
   console.log(`[cuna] ${dispositivo.codigo} volvió en línea con monitoreo activo: sensores reactivados`);
 }
 
-registrarManejador('cuna', { requiereMonitoreo: true, lecturas: alRecibirLecturas, conectado: alConectarse });
+// ---- Luz de noche (HU-CUN-08) ----
+export const NIVELES_LUZ = [1, 2, 3];
+
+export function textoLuz({ luz_encendida, luz_nivel }) {
+  return luz_encendida ? `encendida (nivel ${luz_nivel})` : 'apagada';
+}
+
+/** Cambia la luz y espera a que la cuna confirme el nuevo estado. */
+export async function cambiarLuz(dispositivo, usuario, { encendida, nivel }) {
+  const estado = await comandoConConfirmacion(
+    dispositivo.codigo,
+    { accion: 'luz', encendida, nivel },
+    (e) => e.luz_encendida === encendida && e.luz_nivel === nivel,
+  );
+  if (!estado) {
+    throw Object.assign(new Error('La cuna no confirmó el cambio de luz. Revisa que esté encendida.'), { status: 504 });
+  }
+  await guardarEvento(dispositivo, {
+    tipo: 'luz',
+    detalle: { mensaje: `Luz ${textoLuz(estado)} por ${usuario.nombre}`, encendida, nivel, origen: 'plataforma' },
+  });
+  return { luz_encendida: estado.luz_encendida, luz_nivel: estado.luz_nivel };
+}
+
+// Cambios hechos a mano en la cuna (CA3): la cuna publica el evento "luz" y su nuevo estado.
+function prepararEvento(dispositivo, datos) {
+  if (datos?.tipo !== 'luz') return datos;
+  const d = datos.detalle ?? {};
+  return {
+    ...datos,
+    detalle: { ...d, mensaje: `Luz ${textoLuz({ luz_encendida: d.encendida, luz_nivel: d.nivel })} con el botón de la cuna` },
+  };
+}
+
+registrarManejador('cuna', {
+  requiereMonitoreo: true, // lecturas y alertas solo con monitoreo activo (HU-CUN-01 CA3)
+  eventosLibres: ['luz'], // la luz se puede usar aunque el monitoreo esté apagado
+  lecturas: alRecibirLecturas,
+  prepararEvento,
+  conectado: alConectarse,
+});

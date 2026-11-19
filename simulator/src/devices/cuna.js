@@ -19,7 +19,7 @@ const PROB_MOVIMIENTO_POR_SEG = 1 / 25; // movimientos espontáneos del bebé (~
 
 class Cuna extends DispositivoSimulado {
   constructor(codigo) {
-    super(codigo, 'cuna', { monitoreo: false, luz: 0, sonido: null });
+    super(codigo, 'cuna', { monitoreo: false, luz_encendida: false, luz_nivel: 1, sonido: null });
     // Valores reales de los sensores (no se publican en "estado": se envían como lecturas)
     this.sensores = { ...NORMAL };
     this.objetivo = { ...NORMAL };
@@ -61,6 +61,12 @@ class Cuna extends DispositivoSimulado {
       case 'solicitar_datos':
         this.enviarDatos();
         break;
+      case 'luz': // HU-CUN-08: la plataforma cambia la luz
+        if (typeof comando.encendida === 'boolean') this.estado.luz_encendida = comando.encendida;
+        if ([1, 2, 3].includes(comando.nivel)) this.estado.luz_nivel = comando.nivel;
+        this.publicarEstado();
+        console.log(`[${this.codigo}] luz ${this.textoLuz()} (desde la plataforma)`);
+        break;
       default:
         super.manejarComando(comando);
     }
@@ -81,8 +87,27 @@ class Cuna extends DispositivoSimulado {
     this.cola = [];
   }
 
+  textoLuz() {
+    return this.estado.luz_encendida ? `encendida, nivel ${this.estado.luz_nivel}` : 'apagada';
+  }
+
+  // Botones físicos de la cuna (HU-CUN-08 CA3): cambian la luz y avisan a la plataforma.
+  botonLuz(cambio) {
+    cambio();
+    this.publicarEstado();
+    this.publicarEvento('luz', { encendida: this.estado.luz_encendida, nivel: this.estado.luz_nivel, origen: 'manual' });
+    return `Luz ${this.textoLuz()} (botón de la cuna)`;
+  }
+
   // Escenarios del panel de control
   escenario(nombre) {
+    if (nombre === 'boton_luz') return this.botonLuz(() => (this.estado.luz_encendida = !this.estado.luz_encendida));
+    if (nombre === 'boton_nivel') {
+      return this.botonLuz(() => {
+        this.estado.luz_encendida = true;
+        this.estado.luz_nivel = (this.estado.luz_nivel % 3) + 1;
+      });
+    }
     if (nombre === 'movimiento') return this.detectarMovimiento() ? 'Movimiento registrado' : 'Monitoreo apagado: no se registra';
     const cambio = ESCENARIOS[nombre];
     if (!cambio) return 'Escenario desconocido';
@@ -94,6 +119,9 @@ class Cuna extends DispositivoSimulado {
     return {
       sensores: `${redondear(this.sensores.temperatura, 1)} °C · ${redondear(this.sensores.humedad, 0)} %`,
       'movimientos en cola': this.cola.length,
+      'luz de noche': this.estado.luz_encendida
+        ? '💡 ' + '●'.repeat(this.estado.luz_nivel) + '○'.repeat(3 - this.estado.luz_nivel) + ` (nivel ${this.estado.luz_nivel})`
+        : '⚫ apagada',
     };
   }
 }

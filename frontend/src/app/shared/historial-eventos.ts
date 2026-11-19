@@ -25,6 +25,7 @@ const NOMBRES: Record<string, string> = {
   movimiento: '📷 Movimiento detectado',
   apertura_puerta: '🚪 Apertura de puerta',
   medicion: '🍼 Temperatura de la leche',
+  luz: '💡 Luz de noche',
 };
 
 const INTERVALO_MS = 3000;

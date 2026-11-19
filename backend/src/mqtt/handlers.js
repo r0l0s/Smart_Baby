@@ -43,7 +43,9 @@ export async function alRecibirEvento(codigo, datos) {
   if (!dispositivo) return;
   const manejador = manejadores[dispositivo.tipo];
   const monitoreo = await monitoreoActivo(dispositivo.id);
-  if (manejador?.requiereMonitoreo && !monitoreo) {
+  // Algunos eventos no dependen del monitoreo (ej. encender la luz de la cuna a mano).
+  const libre = manejador?.eventosLibres?.includes(datos?.tipo);
+  if (manejador?.requiereMonitoreo && !monitoreo && !libre) {
     console.log(`[mqtt] ${codigo}: evento "${datos?.tipo}" ignorado (monitoreo desactivado)`);
     return;
   }

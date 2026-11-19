@@ -235,6 +235,33 @@ router.put('/:id/opciones', async (req, res, next) => {
   }
 });
 
+// POST /api/dispositivos/:id/luz  { encendida?: boolean, nivel?: 1|2|3 }   (HU-CUN-08)
+// Lo que no se envía se mantiene como está. Responde con el estado que confirmó la cuna.
+router.post('/:id/luz', async (req, res, next) => {
+  try {
+    const d = await dispositivoDelAmbiente(req, res);
+    if (!d) return;
+    if (d.tipo !== 'cuna') return res.status(400).json({ error: 'Solo la cuna tiene luz de noche' });
+    const vivo = estadoEnVivo(d.codigo);
+    if (!vivo?.online) return res.status(409).json({ error: 'La cuna está fuera de línea. Revisa que esté encendida.' });
+
+    const { encendida, nivel } = req.body ?? {};
+    if (encendida !== undefined && typeof encendida !== 'boolean') {
+      return res.status(400).json({ error: 'Indica si la luz debe estar encendida o apagada' });
+    }
+    if (nivel !== undefined && !cuna.NIVELES_LUZ.includes(nivel)) {
+      return res.status(400).json({ error: 'El nivel de intensidad debe ser 1, 2 o 3' });
+    }
+    const objetivo = {
+      encendida: encendida ?? !!vivo.luz_encendida,
+      nivel: nivel ?? vivo.luz_nivel ?? 1,
+    };
+    res.json(await cuna.cambiarLuz(d, req.usuario, objetivo));
+  } catch (err) {
+    next(err);
+  }
+});
+
 // POST /api/dispositivos/:id/medir — base de biberón: medir la temperatura de la leche (HU-ALI-01)
 router.post('/:id/medir', async (req, res, next) => {
   try {
