@@ -35,6 +35,13 @@
       }
     </section>
 
+    @if (d.tipo === 'cuna') {
+      <section class="tarjeta-seccion">
+        <h2>Rangos de alerta</h2>
+        <app-umbrales-cuna [dispositivo]="d" (cambio)="cargar()" />
+      </section>
+    }
+
     @if (valores(d).length) {
     <section class="tarjeta-seccion">
       <h2>Estado actual</h2>
@@ -58,6 +65,19 @@
       <h2>Historial de eventos</h2>
       <app-historial-eventos [dispositivoId]="d.id" />
     </section>
+
+    @if (auth.usuario()?.rol === 'principal') {
+      <section class="tarjeta-seccion eliminar">
+        <h2>Eliminar dispositivo</h2>
+        <p>
+          Quita el dispositivo de tu ambiente. Dejará de enviar datos y alertas, y podrás volver a agregarlo
+          desde <strong>Agregar dispositivo</strong>. Su historial se conserva.
+        </p>
+        <button type="button" class="boton peligro" (click)="eliminar(d)" [disabled]="eliminando()">
+          {{ eliminando() ? 'Eliminando…' : '🗑️ Eliminar dispositivo' }}
+        </button>
+      </section>
+    }
   } @else if (!error()) {
     <p>Cargando…</p>
   }

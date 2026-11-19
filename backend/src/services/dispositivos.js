@@ -37,7 +37,7 @@ export function dispositivoPublico(fila) {
 
 // Códigos ya vinculados a cualquier ambiente (un dispositivo solo puede pertenecer a uno).
 export async function codigosVinculados() {
-  const { data, error } = await supabase.from('dispositivos').select('codigo');
+  const { data, error } = await supabase.from('dispositivos').select('codigo').is('eliminado_en', null);
   if (error) throw error;
   return new Set(data.map((d) => d.codigo));
 }
@@ -57,7 +57,8 @@ export async function nombrePorDefecto(ambienteId, tipo) {
     .from('dispositivos')
     .select('id', { count: 'exact', head: true })
     .eq('ambiente_id', ambienteId)
-    .eq('tipo', tipo);
+    .eq('tipo', tipo)
+    .is('eliminado_en', null);
   if (error) throw error;
   const base = TIPOS[tipo].nombre;
   return count ? `${base} ${count + 1}` : base;

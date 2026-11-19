@@ -27,6 +27,7 @@ export async function dispositivoPorCodigo(codigo) {
     .from('dispositivos')
     .select('id, ambiente_id, tipo, nombre, codigo, configuracion')
     .eq('codigo', codigo)
+    .is('eliminado_en', null) // un dispositivo eliminado ya no pertenece a ningún ambiente
     .maybeSingle();
   if (error) throw error;
   cache.set(codigo, { dispositivo: data, expira: Date.now() + DURACION_CACHE_MS });

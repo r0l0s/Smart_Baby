@@ -44,6 +44,7 @@ export async function iniciarBroker(puerto) {
           .from('dispositivos')
           .update({ estado })
           .eq('codigo', codigo)
+          .is('eliminado_en', null)
           .then(({ error }) => error && console.error(`[mqtt] No se pudo guardar el estado de ${codigo}:`, error.message));
       }
     }

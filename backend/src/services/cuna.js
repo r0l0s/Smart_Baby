@@ -76,7 +76,8 @@ async function solicitarDatosACunasActivas() {
     .from('monitoreos')
     .select('dispositivos!inner(codigo, tipo)')
     .is('fin', null)
-    .eq('dispositivos.tipo', 'cuna');
+    .eq('dispositivos.tipo', 'cuna')
+    .is('dispositivos.eliminado_en', null);
   if (error) throw error;
   for (const fila of data) enviarComando(fila.dispositivos.codigo, { accion: 'solicitar_datos' });
 }

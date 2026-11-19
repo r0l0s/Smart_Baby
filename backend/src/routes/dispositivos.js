@@ -11,7 +11,8 @@ import {
   disponibles,
   nombrePorDefecto,
 } from '../services/dispositivos.js';
-import { olvidarDispositivo, monitoreoActivo } from '../services/registro.js';
+import { olvidarDispositivo, monitoreoActivo, finalizarMonitoreo, guardarEvento } from '../services/registro.js';
+import { enviarComando } from '../mqtt/broker.js';
 import * as cuna from '../services/cuna.js';
 import * as colchon from '../services/colchon.js';
 import * as seguridad from '../services/seguridad.js';
@@ -27,6 +28,7 @@ router.get('/', async (req, res, next) => {
       .from('dispositivos')
       .select('*')
       .eq('ambiente_id', req.usuario.ambiente_id)
+      .is('eliminado_en', null)
       .order('creado_en');
     if (error) throw error;
     res.json(data.map(dispositivoPublico));
@@ -95,12 +97,45 @@ async function dispositivoDelAmbiente(req, res) {
     .select('*')
     .eq('id', req.params.id)
     .eq('ambiente_id', req.usuario.ambiente_id)
+    .is('eliminado_en', null)
     .maybeSingle();
   // 22P02 = el id no tiene formato uuid
   if (error && error.code !== '22P02') throw error;
   if (!data) res.status(404).json({ error: 'Dispositivo no encontrado' });
   return data;
 }
+
+// DELETE /api/dispositivos/:id — quita el dispositivo del ambiente (solo el usuario principal).
+// No se borra la fila: se marca eliminado_en para conservar lecturas y eventos (HU-TRN-01 CA2).
+// Después, el dispositivo queda libre para vincularse de nuevo.
+router.delete('/:id', async (req, res, next) => {
+  try {
+    if (req.usuario.rol !== 'principal') {
+      return res.status(403).json({ error: 'Solo el usuario principal puede eliminar dispositivos' });
+    }
+    const d = await dispositivoDelAmbiente(req, res);
+    if (!d) return;
+
+    // Si tenía un monitoreo abierto, se cierra y se le ordena al dispositivo detenerse.
+    const monitoreo = await finalizarMonitoreo(d.id);
+    if (monitoreo) enviarComando(d.codigo, { accion: 'desactivar_monitoreo' });
+
+    await guardarEvento(d, {
+      tipo: 'eliminacion',
+      detalle: { mensaje: `Dispositivo eliminado del ambiente por ${req.usuario.nombre}` },
+    });
+    const { error } = await supabase
+      .from('dispositivos')
+      .update({ eliminado_en: new Date().toISOString() })
+      .eq('id', d.id);
+    if (error) throw error;
+    olvidarDispositivo(d.codigo); // deja de guardar sus lecturas de inmediato
+    console.log(`[api] Dispositivo ${d.codigo} eliminado del ambiente`);
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
 
 // GET /api/dispositivos/:id — un dispositivo del ambiente (pantalla dedicada).
 // Incluye el monitoreo activo (o null) y cada cuántos segundos se actualizan los datos.
@@ -114,6 +149,53 @@ router.get('/:id', async (req, res, next) => {
       intervalo_seg: config.intervaloCunaSeg,
       ...(d.tipo === 'biberon' && { ultima_medicion: await biberon.ultimaMedicion(d.id) }),
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// PUT /api/dispositivos/:id/umbrales  { temp_min, temp_max, hum_min, hum_max }   (HU-CUN-04)
+// Guarda los rangos de alerta de la cuna. Se aplican desde la siguiente medición (CA2).
+const LIMITES_UMBRALES = {
+  temp: { nombre: 'temperatura', unidad: '°C', min: 0, max: 50 },
+  hum: { nombre: 'humedad', unidad: '%', min: 0, max: 100 },
+};
+router.put('/:id/umbrales', async (req, res, next) => {
+  try {
+    const d = await dispositivoDelAmbiente(req, res);
+    if (!d) return;
+    if (d.tipo !== 'cuna') return res.status(400).json({ error: 'Solo la cuna tiene umbrales de temperatura y humedad' });
+
+    const nuevos = {};
+    for (const [prefijo, l] of Object.entries(LIMITES_UMBRALES)) {
+      const min = Number(req.body?.[`${prefijo}_min`]);
+      const max = Number(req.body?.[`${prefijo}_max`]);
+      if (!Number.isFinite(min) || !Number.isFinite(max)) {
+        return res.status(400).json({ error: `Ingresa el mínimo y el máximo de ${l.nombre}`, campo: prefijo });
+      }
+      if (min < l.min || max > l.max) {
+        return res.status(400).json({ error: `Los valores de ${l.nombre} deben estar entre ${l.min} y ${l.max} ${l.unidad}`, campo: prefijo });
+      }
+      // CA3: el mínimo debe ser menor que el máximo
+      if (min >= max) {
+        return res.status(400).json({ error: `El mínimo de ${l.nombre} debe ser menor que el máximo`, campo: prefijo });
+      }
+      nuevos[`${prefijo}_min`] = min;
+      nuevos[`${prefijo}_max`] = max;
+    }
+
+    const configuracion = { ...d.configuracion, ...nuevos };
+    const { error } = await supabase.from('dispositivos').update({ configuracion }).eq('id', d.id);
+    if (error) throw error;
+    olvidarDispositivo(d.codigo); // la próxima lectura ya usa los nuevos umbrales
+    await guardarEvento(d, {
+      tipo: 'configuracion',
+      detalle: {
+        mensaje: `Rangos de alerta actualizados por ${req.usuario.nombre}: ${nuevos.temp_min}–${nuevos.temp_max} °C y ${nuevos.hum_min}–${nuevos.hum_max} %`,
+        ...nuevos,
+      },
+    });
+    res.json({ configuracion });
   } catch (err) {
     next(err);
   }

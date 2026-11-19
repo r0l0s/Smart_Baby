@@ -69,4 +69,9 @@ export class DispositivosService {
   vincular(codigo: string): Observable<Dispositivo> {
     return this.http.post<Dispositivo>('/api/dispositivos', { codigo });
   }
+
+  /** Quita el dispositivo del ambiente (el historial se conserva en la base de datos). */
+  eliminar(id: string): Observable<{ ok: boolean }> {
+    return this.http.delete<{ ok: boolean }>(`/api/dispositivos/${id}`);
+  }
 }

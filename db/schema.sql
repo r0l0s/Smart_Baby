@@ -57,12 +57,18 @@ create table if not exists dispositivos (
   id            uuid primary key default gen_random_uuid(),
   ambiente_id   uuid not null references ambientes(id) on delete cascade,
   tipo          text not null check (tipo in ('cuna', 'colchon', 'matriz', 'seguridad', 'biberon')),
-  codigo        text not null unique,              -- ej. "cuna-01", usado en los tópicos MQTT
+  codigo        text not null,                      -- ej. "cuna-01", usado en los tópicos MQTT
   nombre        text not null,
   estado        jsonb not null default '{}'::jsonb, -- último estado conocido
   configuracion jsonb not null default '{}'::jsonb, -- umbrales y opciones
-  creado_en     timestamptz not null default now()
+  creado_en     timestamptz not null default now(),
+  eliminado_en  timestamptz                         -- se quitó del ambiente (el historial se conserva)
 );
+-- Para bases creadas antes de poder eliminar dispositivos:
+alter table dispositivos add column if not exists eliminado_en timestamptz;
+alter table dispositivos drop constraint if exists dispositivos_codigo_key;
+-- Un código solo puede estar vinculado una vez a la vez (los eliminados no cuentan).
+create unique index if not exists dispositivos_codigo_vinculado_idx on dispositivos (codigo) where eliminado_en is null;
 create index if not exists dispositivos_ambiente_idx on dispositivos (ambiente_id);
 
 -- ---------------------------------------------------------------------

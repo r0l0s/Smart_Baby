@@ -34,7 +34,7 @@ import { formatearFecha } from '../../shared/fechas';
       <div class="alerta-error">{{ error() }}</div>
     }
     <p class="nota">
-      Rangos de alerta: {{ d.configuracion['temp_min'] }}–{{ d.configuracion['temp_max'] }} °C ·
+      Rangos de alerta actuales: {{ d.configuracion['temp_min'] }}–{{ d.configuracion['temp_max'] }} °C ·
       {{ d.configuracion['hum_min'] }}–{{ d.configuracion['hum_max'] }} %.
       Los datos se actualizan cada {{ intervalo() }}.
     </p>

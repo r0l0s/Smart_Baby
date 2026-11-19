@@ -3,6 +3,8 @@
 // cada tipo se agregan en sus historias (cuna: HU-CUN-*, colchón: HU-COL-*, ...).
 import { Component, DestroyRef, OnInit, inject, input, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
+import { Router } from '@angular/router';
+import { AuthService } from '../../core/auth.service';
 import { Dispositivo, DispositivosService, TipoDispositivo, infoTipo } from '../../core/dispositivos';
 import { Encabezado } from '../../shared/encabezado';
 import { GraficasMonitoreo, SerieGrafica } from '../../shared/graficas-monitoreo';
@@ -11,6 +13,7 @@ import { ControlesCuna } from './controles-cuna';
 import { ControlesColchon } from './controles-colchon';
 import { ControlesSeguridad } from './controles-seguridad';
 import { ControlesBiberon } from './controles-biberon';
+import { UmbralesCuna } from './umbrales-cuna';
 
 const INTERVALO_MS = 3000;
 
@@ -51,7 +54,7 @@ const ETIQUETAS: Record<string, { texto: string; unidad?: string }> = {
 
 @Component({
   selector: 'app-dispositivo',
-  imports: [Encabezado, GraficasMonitoreo, HistorialEventos, ControlesCuna, ControlesColchon, ControlesSeguridad, ControlesBiberon],
+  imports: [Encabezado, GraficasMonitoreo, HistorialEventos, ControlesCuna, ControlesColchon, ControlesSeguridad, ControlesBiberon, UmbralesCuna],
   templateUrl: './dispositivo.html',
   styleUrl: './dispositivo.css',
 })
@@ -60,6 +63,9 @@ export class DispositivoPagina implements OnInit {
   id = input.required<string>();
 
   private servicio = inject(DispositivosService);
+  private router = inject(Router);
+  protected auth = inject(AuthService);
+  protected eliminando = signal(false);
   protected dispositivo = signal<Dispositivo | null>(null);
   protected error = signal('');
   protected infoTipo = infoTipo;
@@ -74,7 +80,24 @@ export class DispositivoPagina implements OnInit {
     this.cargar(); // aquí el id de la URL ya está disponible
   }
 
+  /** Quita el dispositivo del ambiente, previa confirmación, y vuelve a Inicio. */
+  protected eliminar(d: Dispositivo) {
+    const ok = confirm(
+      `¿Eliminar "${d.nombre}" de tu ambiente?\n\nDejará de enviar datos y alertas. Podrás volver a agregarlo cuando quieras.`,
+    );
+    if (!ok) return;
+    this.eliminando.set(true);
+    this.servicio.eliminar(d.id).subscribe({
+      next: () => this.router.navigateByUrl('/'),
+      error: (err: HttpErrorResponse) => {
+        this.eliminando.set(false);
+        this.error.set(err.error?.error || 'No se pudo eliminar el dispositivo.');
+      },
+    });
+  }
+
   protected cargar() {
+    if (this.eliminando()) return;
     this.servicio.obtener(this.id()).subscribe({
       next: (d) => {
         this.dispositivo.set(d);
