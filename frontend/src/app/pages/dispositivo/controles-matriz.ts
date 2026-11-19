@@ -18,7 +18,16 @@ const NOMBRE_VELOCIDAD: Record<string, string> = { lenta: 'Lenta', media: 'Media
           {{ encendida() ? '🟢 Encendida' : '⚪ Apagada' }}
           @if (d.estado['origen'] === 'horario') { <span class="etiqueta">por horario</span> }
         </p>
-        <p class="detalle">Velocidad: <strong>{{ velocidad() }}</strong></p>
+        <!-- HU-MAT-02: 3 velocidades; se aplican de inmediato sin apagar la matriz -->
+        <div class="velocidades" role="group" aria-label="Velocidad del patrón">
+          <span class="etiqueta-vel">Velocidad:</span>
+          @for (v of velocidades; track v.id) {
+            <button type="button" class="vel" [class.activa]="velocidadId() === v.id" [attr.aria-pressed]="velocidadId() === v.id"
+                    (click)="cambiar({ velocidad: v.id })" [disabled]="enviando() || !d.online">
+              {{ v.icono }} {{ v.nombre }}
+            </button>
+          }
+        </div>
         <button type="button" class="boton" [class.secundario]="encendida()" (click)="cambiar({ encendida: !encendida() })"
                 [disabled]="enviando() || !d.online">
           {{ enviando() ? 'Un momento…' : encendida() ? 'Apagar matriz' : 'Encender matriz' }}
@@ -36,7 +45,11 @@ const NOMBRE_VELOCIDAD: Record<string, string> = { lenta: 'Lenta', media: 'Media
     .estado { font-weight: 700; margin: 0 0 4px; }
     .estado.activa { color: #146c2e; }
     .etiqueta { font-size: 0.75rem; background: #e8eefc; color: #1d3f86; padding: 2px 8px; border-radius: 999px; margin-left: 6px; }
-    .detalle { margin: 0 0 12px; color: #5b6475; }
+    .velocidades { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 4px 0 14px; }
+    .etiqueta-vel { color: #5b6475; margin-right: 4px; }
+    .vel { border: 1px solid #c6ccd8; background: #fff; border-radius: 10px; padding: 8px 12px; font-size: 0.9rem; cursor: pointer; }
+    .vel.activa { background: #ffe1e1; border-color: #d33; font-weight: 700; }
+    .vel:disabled { opacity: 0.5; cursor: not-allowed; }
     .boton { width: auto; min-width: 200px; }
     .nota { color: #5b6475; font-size: 0.85rem; margin: 10px 0 0; }
     .alerta-error { margin: 12px 0 0; }
@@ -50,7 +63,12 @@ export class ControlesMatriz {
   protected enviando = signal(false);
   protected error = signal('');
   protected encendida = computed(() => this.dispositivo().estado['encendida'] === true);
-  protected velocidad = computed(() => NOMBRE_VELOCIDAD[this.dispositivo().estado['velocidad'] as string] ?? 'Media');
+  protected velocidadId = computed(() => (this.dispositivo().estado['velocidad'] as string) ?? 'media');
+  protected velocidades = [
+    { id: 'lenta', nombre: NOMBRE_VELOCIDAD['lenta'], icono: '🐢' },
+    { id: 'media', nombre: NOMBRE_VELOCIDAD['media'], icono: '🚶' },
+    { id: 'rapida', nombre: NOMBRE_VELOCIDAD['rapida'], icono: '🐇' },
+  ];
 
   cambiar(cambio: { encendida?: boolean; velocidad?: string }) {
     this.enviando.set(true);

@@ -321,7 +321,7 @@ router.post('/:id/matriz', async (req, res, next) => {
       velocidad: velocidad ?? vivo.velocidad ?? 'media',
       origen: 'manual',
     };
-    res.json(await matriz.cambiarMatriz(d, objetivo, `por ${req.usuario.nombre}`));
+    res.json(await matriz.cambiarMatriz(d, objetivo, `por ${req.usuario.nombre}`, vivo));
   } catch (err) {
     next(err);
   }
