@@ -38,6 +38,20 @@ import { formatearFecha } from '../../shared/fechas';
       {{ d.configuracion['hum_min'] }}–{{ d.configuracion['hum_max'] }} %.
       Los datos se actualizan cada {{ intervalo() }}.
     </p>
+
+    <!-- HU-CUN-07: notificación por cada movimiento (deshabilitada por defecto) -->
+    <label class="opcion">
+      <input
+        type="checkbox"
+        [checked]="d.configuracion['notificar_movimiento'] === true"
+        [disabled]="guardandoOpcion()"
+        (change)="cambiarNotificarMovimiento($any($event.target).checked)"
+      >
+      <span>
+        <strong>🏃 Notificarme cada movimiento por Telegram</strong>
+        <small>Si está desmarcado, los movimientos se registran y grafican, pero no se notifican.</small>
+      </span>
+    </label>
   `,
   styles: `
     .fila { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
@@ -47,6 +61,19 @@ import { formatearFecha } from '../../shared/fechas';
     .boton { width: auto; min-width: 220px; }
     .nota { color: #5b6475; font-size: 0.85rem; margin: 12px 0 0; }
     .alerta-error { margin: 12px 0 0; }
+    .opcion {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      margin-top: 14px;
+      padding: 12px;
+      background: #f4f6fa;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    .opcion input { width: 20px; height: 20px; margin-top: 2px; flex: none; }
+    .opcion span { display: flex; flex-direction: column; gap: 2px; }
+    .opcion small { color: #5b6475; }
   `,
 })
 export class ControlesCuna {
@@ -62,6 +89,24 @@ export class ControlesCuna {
   protected intervalo() {
     const s = this.dispositivo().intervalo_seg ?? 180;
     return s % 60 === 0 ? `${s / 60} min` : `${s} s (modo demo)`;
+  }
+
+  protected guardandoOpcion = signal(false);
+
+  cambiarNotificarMovimiento(valor: boolean) {
+    this.guardandoOpcion.set(true);
+    this.error.set('');
+    this.http.put(`/api/dispositivos/${this.dispositivo().id}/opciones`, { notificar_movimiento: valor }).subscribe({
+      next: () => {
+        this.guardandoOpcion.set(false);
+        this.cambio.emit();
+      },
+      error: (err: HttpErrorResponse) => {
+        this.guardandoOpcion.set(false);
+        this.error.set(err.error?.error || 'No se pudo guardar la opción.');
+        this.cambio.emit(); // vuelve a mostrar el valor guardado
+      },
+    });
   }
 
   cambiar(activo: boolean) {

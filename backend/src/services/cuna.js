@@ -126,6 +126,21 @@ async function alRecibirLecturas(dispositivo, filas) {
     notificarAmbiente(dispositivo.ambiente_id, texto); // sin await: Telegram no debe frenar el registro
     console.log(`[cuna] ${dispositivo.codigo}: ${mensaje}`);
   }
+
+  // HU-CUN-07: una notificación por cada detección de movimiento, solo si el usuario lo habilitó
+  // (deshabilitado por defecto). El movimiento siempre se registra (ya se guardó arriba).
+  if (dispositivo.configuracion?.notificar_movimiento === true) {
+    for (const fila of filas.filter((f) => f.tipo === 'movimiento')) {
+      const texto = formatearNotificacion({
+        emoji: '🏃',
+        dispositivo: dispositivo.nombre,
+        evento: 'Movimiento detectado',
+        valores: ['El sensor de la cuna detectó movimiento del bebé.'],
+        fecha: fila.registrado_en,
+      });
+      notificarAmbiente(dispositivo.ambiente_id, texto);
+    }
+  }
 }
 
 // Si la cuna se reinicia con un monitoreo abierto, se le vuelve a ordenar que encienda los sensores.

@@ -203,6 +203,38 @@ router.put('/:id/umbrales', async (req, res, next) => {
   }
 });
 
+// PUT /api/dispositivos/:id/opciones  { <opción>: valor }
+// Opciones simples (sí/no) de cada tipo de dispositivo. Solo se aceptan las de esta lista.
+const OPCIONES = {
+  cuna: { notificar_movimiento: 'Notificar cada movimiento por Telegram' }, // HU-CUN-07
+};
+router.put('/:id/opciones', async (req, res, next) => {
+  try {
+    const d = await dispositivoDelAmbiente(req, res);
+    if (!d) return;
+    const permitidas = OPCIONES[d.tipo] ?? {};
+    const cambios = {};
+    for (const [clave, valor] of Object.entries(req.body ?? {})) {
+      if (!(clave in permitidas)) return res.status(400).json({ error: `Opción desconocida: ${clave}` });
+      if (typeof valor !== 'boolean') return res.status(400).json({ error: `La opción ${clave} debe ser sí o no` });
+      cambios[clave] = valor;
+    }
+    if (!Object.keys(cambios).length) return res.status(400).json({ error: 'No se indicó ninguna opción' });
+
+    const configuracion = { ...d.configuracion, ...cambios };
+    const { error } = await supabase.from('dispositivos').update({ configuracion }).eq('id', d.id);
+    if (error) throw error;
+    olvidarDispositivo(d.codigo); // se aplica desde el siguiente dato que llegue
+    const resumen = Object.entries(cambios)
+      .map(([k, v]) => `${permitidas[k]}: ${v ? 'sí' : 'no'}`)
+      .join(', ');
+    await guardarEvento(d, { tipo: 'configuracion', detalle: { mensaje: `${resumen} (por ${req.usuario.nombre})`, ...cambios } });
+    res.json({ configuracion });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // POST /api/dispositivos/:id/medir — base de biberón: medir la temperatura de la leche (HU-ALI-01)
 router.post('/:id/medir', async (req, res, next) => {
   try {

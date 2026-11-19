@@ -3,7 +3,10 @@ import { supabase } from '../db.js';
 import { estados } from '../mqtt/broker.js';
 
 export const TIPOS = {
-  cuna: { nombre: 'Cuna', configuracion: { temp_min: 20, temp_max: 24, hum_min: 40, hum_max: 60 } },
+  cuna: {
+    nombre: 'Cuna',
+    configuracion: { temp_min: 20, temp_max: 24, hum_min: 40, hum_max: 60, notificar_movimiento: false },
+  },
   colchon: { nombre: 'Colchón', configuracion: {} },
   matriz: { nombre: 'Matriz LED', configuracion: {} },
   seguridad: { nombre: 'Sistema de seguridad', configuracion: {} },
