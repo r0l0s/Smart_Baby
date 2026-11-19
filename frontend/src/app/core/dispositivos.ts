@@ -18,6 +18,8 @@ export interface Dispositivo {
   monitoreo?: { id: string; inicio: string; fin: string | null } | null;
   /** Solo en el detalle: cada cuántos segundos se actualizan los datos */
   intervalo_seg?: number;
+  /** Solo en el detalle de una cuna: sonidos pregrabados disponibles (HU-CUN-09) */
+  sonidos_disponibles?: { id: string; nombre: string; emoji: string }[];
   /** Solo en el detalle de una base de biberón */
   ultima_medicion?: Medicion | null;
 }

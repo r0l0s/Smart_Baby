@@ -15,11 +15,18 @@ const ESCENARIOS = {
   hum_normal: { humedad: NORMAL.humedad },
 };
 const PASO_MS = 1000;
+const NOMBRES_SONIDOS = {
+  cancion_cuna: 'Canción de cuna',
+  ruido_blanco: 'Ruido blanco',
+  lluvia: 'Lluvia',
+  olas: 'Olas del mar',
+  latido: 'Latido del corazón',
+};
 const PROB_MOVIMIENTO_POR_SEG = 1 / 25; // movimientos espontáneos del bebé (~1 cada 25 s)
 
 class Cuna extends DispositivoSimulado {
   constructor(codigo) {
-    super(codigo, 'cuna', { monitoreo: false, luz_encendida: false, luz_nivel: 1, sonido: null });
+    super(codigo, 'cuna', { monitoreo: false, luz_encendida: false, luz_nivel: 1, sonido: null, audio_activo: false });
     // Valores reales de los sensores (no se publican en "estado": se envían como lecturas)
     this.sensores = { ...NORMAL };
     this.objetivo = { ...NORMAL };
@@ -67,6 +74,12 @@ class Cuna extends DispositivoSimulado {
         this.publicarEstado();
         console.log(`[${this.codigo}] luz ${this.textoLuz()} (desde la plataforma)`);
         break;
+      case 'sonido': // HU-CUN-09: reproducir (id) o detener (null)
+        // La cuna no mezcla sonidos con la comunicación de audio: si hay llamada, no reproduce.
+        if (!(comando.sonido && this.estado.audio_activo)) this.estado.sonido = comando.sonido ?? null;
+        this.publicarEstado();
+        console.log(`[${this.codigo}] sonido: ${this.estado.sonido ?? 'ninguno'}`);
+        break;
       default:
         super.manejarComando(comando);
     }
@@ -108,6 +121,13 @@ class Cuna extends DispositivoSimulado {
         this.estado.luz_nivel = (this.estado.luz_nivel % 3) + 1;
       });
     }
+    if (nombre === 'llamada') {
+      // Provisional hasta HU-CUN-10: simula que hay una comunicación de audio activa.
+      this.estado.audio_activo = !this.estado.audio_activo;
+      if (this.estado.audio_activo) this.estado.sonido = null; // audio y sonidos son excluyentes
+      this.publicarEstado();
+      return this.estado.audio_activo ? 'Llamada de audio simulada ACTIVA' : 'Llamada de audio simulada terminada';
+    }
     if (nombre === 'movimiento') return this.detectarMovimiento() ? 'Movimiento registrado' : 'Monitoreo apagado: no se registra';
     const cambio = ESCENARIOS[nombre];
     if (!cambio) return 'Escenario desconocido';
@@ -122,6 +142,8 @@ class Cuna extends DispositivoSimulado {
       'luz de noche': this.estado.luz_encendida
         ? '💡 ' + '●'.repeat(this.estado.luz_nivel) + '○'.repeat(3 - this.estado.luz_nivel) + ` (nivel ${this.estado.luz_nivel})`
         : '⚫ apagada',
+      sonido: this.estado.sonido ? '🎵 ' + (NOMBRES_SONIDOS[this.estado.sonido] ?? this.estado.sonido) : 'ninguno',
+      ...(this.estado.audio_activo && { audio: '📞 comunicación de audio activa' }),
     };
   }
 }

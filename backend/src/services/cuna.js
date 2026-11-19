@@ -174,6 +174,49 @@ export async function cambiarLuz(dispositivo, usuario, { encendida, nivel }) {
   return { luz_encendida: estado.luz_encendida, luz_nivel: estado.luz_nivel };
 }
 
+// ---- Sonidos pregrabados (HU-CUN-09) ----
+// Catálogo de sonidos guardados en la cuna (id = nombre del archivo en el dispositivo).
+export const SONIDOS = [
+  { id: 'cancion_cuna', nombre: 'Canción de cuna', emoji: '🎶' },
+  { id: 'ruido_blanco', nombre: 'Ruido blanco', emoji: '🌫️' },
+  { id: 'lluvia', nombre: 'Lluvia', emoji: '🌧️' },
+  { id: 'olas', nombre: 'Olas del mar', emoji: '🌊' },
+  { id: 'latido', nombre: 'Latido del corazón', emoji: '💓' },
+];
+
+export function nombreSonido(id) {
+  return SONIDOS.find((s) => s.id === id)?.nombre ?? id;
+}
+
+/**
+ * Reproduce un sonido (id) o lo detiene (null) y espera la confirmación de la cuna.
+ * CA3: si la comunicación bidireccional de audio está activa, se rechaza.
+ */
+export async function cambiarSonido(dispositivo, usuario, estadoActual, sonido) {
+  if (sonido && estadoActual.audio_activo) {
+    throw Object.assign(
+      new Error('No se pueden reproducir sonidos mientras la comunicación de audio está activa. Finaliza la llamada primero.'),
+      { status: 409 },
+    );
+  }
+  const estado = await comandoConConfirmacion(
+    dispositivo.codigo,
+    { accion: 'sonido', sonido },
+    (e) => (e.sonido ?? null) === sonido,
+  );
+  if (!estado) {
+    throw Object.assign(new Error('La cuna no confirmó el cambio de sonido. Revisa que esté encendida.'), { status: 504 });
+  }
+  await guardarEvento(dispositivo, {
+    tipo: 'sonido',
+    detalle: {
+      mensaje: sonido ? `Reproduciendo "${nombreSonido(sonido)}" (por ${usuario.nombre})` : `Sonido detenido por ${usuario.nombre}`,
+      sonido,
+    },
+  });
+  return { sonido: estado.sonido ?? null };
+}
+
 // Cambios hechos a mano en la cuna (CA3): la cuna publica el evento "luz" y su nuevo estado.
 function prepararEvento(dispositivo, datos) {
   if (datos?.tipo !== 'luz') return datos;

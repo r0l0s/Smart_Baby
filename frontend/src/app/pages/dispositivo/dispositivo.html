@@ -40,6 +40,10 @@
         <h2>💡 Luz de noche</h2>
         <app-luz-cuna [dispositivo]="d" (cambio)="cargar()" />
       </section>
+      <section class="tarjeta-seccion">
+        <h2>🎵 Sonidos</h2>
+        <app-sonidos-cuna [dispositivo]="d" (cambio)="cargar()" />
+      </section>
     }
 
     @if (d.tipo === 'cuna') {

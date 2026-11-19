@@ -15,6 +15,7 @@ import { ControlesSeguridad } from './controles-seguridad';
 import { ControlesBiberon } from './controles-biberon';
 import { UmbralesCuna } from './umbrales-cuna';
 import { LuzCuna } from './luz-cuna';
+import { SonidosCuna } from './sonidos-cuna';
 
 const INTERVALO_MS = 3000;
 
@@ -58,6 +59,7 @@ const ETIQUETAS: Record<string, { texto: string; unidad?: string }> = {
   luz_encendida: { texto: 'Luz encendida' },
   luz_nivel: { texto: 'Nivel de luz' },
   sonido: { texto: 'Sonido' },
+  audio_activo: { texto: 'Comunicación de audio' },
   peso: { texto: 'Peso', unidad: 'kg' },
   alarma: { texto: 'Alarma sonando' },
   fase: { texto: 'Fase' },
@@ -71,7 +73,7 @@ const ETIQUETAS: Record<string, { texto: string; unidad?: string }> = {
 
 @Component({
   selector: 'app-dispositivo',
-  imports: [Encabezado, GraficasMonitoreo, HistorialEventos, ControlesCuna, ControlesColchon, ControlesSeguridad, ControlesBiberon, UmbralesCuna, LuzCuna],
+  imports: [Encabezado, GraficasMonitoreo, HistorialEventos, ControlesCuna, ControlesColchon, ControlesSeguridad, ControlesBiberon, UmbralesCuna, LuzCuna, SonidosCuna],
   templateUrl: './dispositivo.html',
   styleUrl: './dispositivo.css',
 })

@@ -28,8 +28,13 @@
 <body>
   <h1>Panel del simulador</h1>
   <p class="sub">Estado de los dispositivos simulados (se actualiza cada segundo) y botones para forzar escenarios.</p>
+  <p>
+    <button id="btn-audio" onclick="alternarAudio()">🔇 Escuchar en este equipo los sonidos de la cuna</button>
+    <span class="sub" id="audio-estado"></span>
+  </p>
   <div class="grid" id="grid">Cargando…</div>
 
+  <script src="sonidos.js"></script>
   <script>
     // [texto del botón, nombre del escenario]. Escenarios sin implementar quedan deshabilitados.
     const escenarios = {
@@ -38,6 +43,7 @@
         ['💧⬆ Subir humedad', 'hum_alta'], ['💧⬇ Bajar humedad', 'hum_baja'], ['💧 Humedad normal', 'hum_normal'],
         ['🏃 Movimiento', 'movimiento'],
         ['💡 Botón de luz (en la cuna)', 'boton_luz'], ['🔆 Botón de intensidad (en la cuna)', 'boton_nivel'],
+        ['📞 Simular llamada de audio', 'llamada'],
       ],
       colchon: [
         ['👶⬆ Quitar bebé', 'quitar_bebe'], ['📦 Dejar caer objeto (+4 kg)', 'objeto'],
@@ -52,6 +58,10 @@
     async function refrescar() {
       try {
         const lista = await (await fetch('/api/dispositivos')).json();
+        // El "parlante" de la primera cuna en línea suena en este equipo (ver sonidos.js)
+        const cuna = lista.find((d) => d.tipo === 'cuna' && d.conectado);
+        SonidosCuna.reproducir(cuna?.estado.sonido ?? null);
+        document.getElementById('audio-estado').textContent = SonidosCuna.descripcion(cuna?.codigo);
         document.getElementById('grid').innerHTML = lista.map((d) => `
           <div class="card">
             <h2>${d.codigo}
@@ -85,6 +95,14 @@
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ escenario: esc }),
       });
       mensajes[codigo] = `${new Date().toLocaleTimeString()} · ${(await r.json()).mensaje}`;
+      refrescar();
+    }
+
+    function alternarAudio() {
+      const activo = SonidosCuna.alternar();
+      document.getElementById('btn-audio').textContent = activo
+        ? '🔊 Sonidos de la cuna activados (clic para silenciar)'
+        : '🔇 Escuchar en este equipo los sonidos de la cuna';
       refrescar();
     }
 

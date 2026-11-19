@@ -148,6 +148,7 @@ router.get('/:id', async (req, res, next) => {
       monitoreo: await monitoreoActivo(d.id),
       intervalo_seg: config.intervaloCunaSeg,
       ...(d.tipo === 'biberon' && { ultima_medicion: await biberon.ultimaMedicion(d.id) }),
+      ...(d.tipo === 'cuna' && { sonidos_disponibles: cuna.SONIDOS }),
     });
   } catch (err) {
     next(err);
@@ -257,6 +258,25 @@ router.post('/:id/luz', async (req, res, next) => {
       nivel: nivel ?? vivo.luz_nivel ?? 1,
     };
     res.json(await cuna.cambiarLuz(d, req.usuario, objetivo));
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/dispositivos/:id/sonido  { sonido: "<id>" | null }   (HU-CUN-09)
+// null detiene el sonido. Responde con el estado que confirmó la cuna.
+router.post('/:id/sonido', async (req, res, next) => {
+  try {
+    const d = await dispositivoDelAmbiente(req, res);
+    if (!d) return;
+    if (d.tipo !== 'cuna') return res.status(400).json({ error: 'Solo la cuna reproduce sonidos' });
+    const vivo = estadoEnVivo(d.codigo);
+    if (!vivo?.online) return res.status(409).json({ error: 'La cuna está fuera de línea. Revisa que esté encendida.' });
+    const sonido = req.body?.sonido ?? null;
+    if (sonido !== null && !cuna.SONIDOS.some((s) => s.id === sonido)) {
+      return res.status(400).json({ error: 'Ese sonido no está disponible' });
+    }
+    res.json(await cuna.cambiarSonido(d, req.usuario, vivo, sonido));
   } catch (err) {
     next(err);
   }
