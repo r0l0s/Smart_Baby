@@ -10,7 +10,9 @@ import { textoDuracion } from './alimentacion.js';
 
 const DESFASE_CR_MS = -6 * 3600 * 1000; // Costa Rica = UTC−6 todo el año
 
-// Recordatorios ya enviados hoy: "idTiempo|AAAA-MM-DD" (evita duplicados si el backend se reinicia)
+// Recordatorios ya enviados: "idTiempo|AAAA-MM-DD|HH:MM". Evita enviar dos veces el mismo
+// recordatorio dentro del mismo minuto. Incluye la hora para que, si el usuario EDITA un tiempo de
+// comida (mismo id, otra hora), la nueva hora también envíe su recordatorio ese mismo día.
 const enviados = new Set();
 
 export function validarHora(valor) {
@@ -71,7 +73,7 @@ async function enviarRecordatorios() {
   if (error) throw error;
 
   for (const t of data) {
-    const clave = `${t.id}|${hoy}`;
+    const clave = `${t.id}|${hoy}|${hhmm}`;
     if (enviados.has(clave)) continue;
     enviados.add(clave);
     const d = t.dispositivos;
