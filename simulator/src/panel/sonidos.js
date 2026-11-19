@@ -129,16 +129,59 @@ const SonidosCuna = (() => {
     detener = null;
   }
 
+  // ---- Desbloqueo para iPad / iPhone (todos los navegadores de iOS usan el motor de Safari) ----
+  // 1. iOS solo deja sonar audio si algo empieza a sonar DENTRO del mismo toque del usuario.
+  // 2. El audio generado (Web Audio) se silencia con el modo silencio del iPad. Reproducir un
+  //    <audio> en bucle (silencioso) hace que iOS lo trate como reproducción de medios y no lo calle.
+  let audioSilencioso = null;
+
+  function wavSilencioso() {
+    const muestras = 8000; // 1 s a 8 kHz, 8 bits
+    const v = new DataView(new ArrayBuffer(44 + muestras));
+    const texto = (pos, s) => [...s].forEach((c, i) => v.setUint8(pos + i, c.charCodeAt(0)));
+    texto(0, 'RIFF'); v.setUint32(4, 36 + muestras, true); texto(8, 'WAVE');
+    texto(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+    v.setUint32(24, 8000, true); v.setUint32(28, 8000, true); v.setUint16(32, 1, true); v.setUint16(34, 8, true);
+    texto(36, 'data'); v.setUint32(40, muestras, true);
+    for (let i = 0; i < muestras; i++) v.setUint8(44 + i, 128); // 128 = silencio en 8 bits
+    return URL.createObjectURL(new Blob([v], { type: 'audio/wav' }));
+  }
+
+  function desbloquearIOS() {
+    try {
+      if (navigator.audioSession) navigator.audioSession.type = 'playback'; // iOS 17+
+    } catch {}
+    if (!audioSilencioso) {
+      audioSilencioso = new Audio(wavSilencioso());
+      audioSilencioso.loop = true;
+      audioSilencioso.setAttribute('playsinline', '');
+    }
+    audioSilencioso.play().catch(() => {});
+    // Un sonido vacío de 1 muestra, reproducido ya, "desbloquea" el AudioContext
+    const vacio = ctx.createBufferSource();
+    vacio.buffer = ctx.createBuffer(1, 1, 22050);
+    vacio.connect(ctx.destination);
+    vacio.start(0);
+  }
+
   return {
+    // Debe llamarse directamente desde el clic/toque del botón.
     alternar() {
       activo = !activo;
-      if (activo && !ctx) ctx = new AudioContext();
-      if (activo) ctx.resume();
-      else {
+      if (activo) {
+        if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+        ctx.resume();
+        desbloquearIOS();
+      } else {
         parar();
         actual = null;
+        audioSilencioso?.pause();
       }
       return activo;
+    },
+    /** Estado del audio del navegador, para mostrarlo si algo falla */
+    estadoContexto() {
+      return ctx?.state ?? 'sin iniciar';
     },
     reproducir(id) {
       if (!activo || id === actual) return;
@@ -157,6 +200,8 @@ const SonidosCuna = (() => {
     },
     descripcion(codigo) {
       if (!activo) return '';
+      // Si el navegador mantiene el audio suspendido, se avisa: hay que volver a tocar el botón.
+      if (ctx && ctx.state !== 'running') return `⚠️ El navegador no permitió el audio (estado: ${ctx.state}). Toca el botón otra vez.`;
       return actual ? `Sonando en ${codigo}: ${NOMBRES[actual] ?? actual}` : 'La cuna no está reproduciendo nada.';
     },
   };
