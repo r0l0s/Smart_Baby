@@ -162,13 +162,19 @@ de Windows" → Node.js JavaScript Runtime → marcar **Privada***.
 
 | Dispositivo | Qué hace |
 |---|---|
-| 🛏️ **Cuna** | Monitoreo de temperatura, humedad y movimiento con gráficas. Alerta si la temperatura sale de 20–24 °C o la humedad de 40–60 %. |
-| ⚖️ **Colchón** | Al activar: cuenta regresiva de 30 s → peso base → lectura cada segundo. Si el peso cambia ≥ 70 % durante 3 lecturas seguidas, suena la alarma (hasta desactivar) y llega una alerta. |
-| 📷 **Sistema de seguridad** | Con la vigilancia activa: movimiento → foto + alerta con la foto; apertura de puerta → alerta. |
-| 🍼 **Base de biberón** | Botón *Tomar temperatura*: muy fría (< 36 °C), apta (36–40 °C) o muy caliente (> 40 °C), en pantalla y por Telegram. |
-| 💡 **Matriz LED** | Se puede vincular; sus controles corresponden al Incremento 2. |
+| 🛏️ **Cuna** | Monitoreo de temperatura, humedad y movimiento con gráficas. Alerta si la temperatura o la humedad salen de los **rangos configurables** (por defecto 20–24 °C y 40–60 %). Notificación opcional por cada movimiento. **Luz de noche** (3 niveles), **5 sonidos pregrabados** y **comunicación con el bebé** (inicio y fin de la llamada; el canal de audio queda para el siguiente sprint). |
+| ⚖️ **Colchón** | Al activar: cuenta regresiva de 30 s → peso base → lectura cada segundo. Si el peso cambia ≥ 70 % durante 3 lecturas seguidas, suena la alarma (hasta desactivar) y llega una alerta. Historial cronológico de activaciones y alarmas. |
+| 📷 **Sistema de seguridad** | Con la vigilancia activa: movimiento → foto + alerta con la foto; apertura de puerta → alerta. Historial cronológico con las fotos. |
+| 🍼 **Base de biberón** | Botón *Tomar temperatura*: muy fría (< 36 °C), apta (36–40 °C) o muy caliente (> 40 °C), en pantalla y por Telegram. **Sesiones de alimentación** cronometradas con la cantidad en ml, **gráficas** de cantidad y duración, y **tiempos de comida** diarios con recordatorio por Telegram. |
+| 💡 **Matriz LED** | Encender y apagar, 3 velocidades y **vista en tiempo real** del patrón 8×8. **Horario diario** (hora de inicio, duración y velocidad) que se puede modificar o eliminar; el control manual prevalece sobre el horario. |
 
-Los **invitados** inician sesión con *su* teléfono y la contraseña del usuario principal del ambiente.
+Cualquier dispositivo se puede **eliminar del ambiente** desde su pantalla (su historial se conserva) y volver a agregar.
+
+**Perfil**: editar nombre y teléfono (un teléfono nuevo pide verificar de nuevo), cambiar la contraseña del ambiente
+(solo el usuario principal), ver los perfiles del ambiente e **invitar familiares**: se genera un enlace al bot de
+Telegram, de un solo uso y válido por 24 horas. El invitado comparte su contacto con el bot y queda agregado.
+Los **invitados** inician sesión con *su* teléfono y la contraseña del ambiente, y tienen los mismos permisos
+sobre los dispositivos.
 
 ---
 
@@ -179,13 +185,17 @@ Los **invitados** inician sesión con *su* teléfono y la contraseña del usuari
 | Dispositivo | Botones |
 |---|---|
 | Todos | **⏻ Apagar / 🔌 Encender** (simula desconectarlo) |
-| Cuna | Subir / bajar / normalizar temperatura y humedad · **🏃 Movimiento** |
+| Cuna | Subir / bajar / normalizar temperatura y humedad · **🏃 Movimiento** · **💡 Botón de luz** y **🔆 Botón de intensidad** (los botones físicos de la cuna) |
 | Colchón | **Quitar bebé** · **Dejar caer objeto (+4 kg)** · **Golpe de 1 s** (no debe sonar la alarma) · **Bebé normal** |
 | Seguridad | **Movimiento en el cuarto** (toma y envía una foto) · **Abrir puerta** |
 | Biberón | Leche **fría** (~30 °C) · **apta** (~38 °C) · **caliente** (~45 °C) |
+| Matriz LED | Muestra en vivo el patrón 8×8 que está mostrando la matriz |
 
-La cámara simulada usa las imágenes `.jpg` / `.png` que pongas en `simulator/assets/`; si no hay, dibuja una foto
-estilo visión nocturna con la hora.
+- **Sonidos de la cuna:** pulsa **🔇 Escuchar en este equipo los sonidos de la cuna** (arriba del panel) y el equipo
+  reproducirá lo que la cuna está sonando. En iPad/iPhone el **modo silencio** debe estar apagado.
+- La cámara simulada usa las imágenes `.jpg` / `.png` que pongas en `simulator/assets/`; si no hay, dibuja una foto
+  estilo visión nocturna con la hora.
+- El panel se puede abrir desde otro equipo de la misma red (por ejemplo una tablet) con `http://<IP-de-la-computadora>:4300`.
 
 ---
 
@@ -236,6 +246,8 @@ encabezado `X-Dispositivo-Clave`).
 | `EADDRINUSE` al iniciar | Ya hay otra copia corriendo (o algo usa los puertos 3000, 1883, 4200 o 4300). Ciérrala. |
 | No carga desde el teléfono | Misma red WiFi, IP correcta y permiso del firewall (ver [Desde el teléfono](#desde-el-teléfono)). |
 | Los dispositivos aparecen *fuera de línea* | Revisa que el simulador esté corriendo y que no los hayas apagado desde el panel. |
+| `409: Conflict` del bot de Telegram en la terminal | Hay **otra copia del backend** usando el mismo bot (por ejemplo en otra computadora). Solo puede correr una a la vez. |
+| Los teléfonos no abren la página en la red de la universidad | Muchas redes públicas aíslan a los equipos entre sí. Usa el *hotspot* de un teléfono para la computadora, la tablet y los teléfonos. |
 
 ---
 
@@ -246,5 +258,8 @@ Gestión con Scrum en Jira (proyecto **PIPB**).
 - ✅ **Incremento 1** (21 historias de prioridad Alta): registro, verificación por Telegram, sesión, pantalla
   principal, vinculación de dispositivos, registro de eventos, gráficas, notificaciones, cuna, colchón, sistema
   de seguridad y temperatura del biberón.
-- ⏳ **Incremento 2**: perfil e invitaciones, umbrales configurables, luz y sonidos de la cuna, audio bidireccional,
-  matriz LED, alimentación, tablero de botones (firmware ATmega328P) y despliegue con HTTPS.
+- ✅ **Incremento 2** (adelanto): gestión de la cuenta, invitaciones y perfiles; umbrales configurables, notificación
+  de movimiento, luz de noche y sonidos de la cuna; historiales del colchón y de seguridad; matriz LED con vista en
+  vivo y horario; sesiones de alimentación, gráficas y recordatorios. Además: eliminar dispositivos del ambiente.
+- ⏳ **Pendiente**: audio bidireccional con la cuna (HU-CUN-10, siguiente sprint, requiere HTTPS), tablero de botones
+  (HU-TAB-01/02, hecho por el equipo en el juguete físico) e integración con el hardware real.
