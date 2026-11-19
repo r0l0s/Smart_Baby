@@ -10,6 +10,7 @@ import authRouter from './routes/auth.js';
 import notificacionesRouter from './routes/notificaciones.js';
 import dispositivosRouter from './routes/dispositivos.js';
 import iotRouter from './routes/iot.js';
+import ambienteRouter from './routes/ambiente.js';
 import { requiereSesion } from './middleware/auth.js';
 import { iniciarConsultaPeriodica } from './services/cuna.js';
 import { iniciarHorarios } from './services/horarioMatriz.js';
@@ -30,6 +31,7 @@ app.use('/api/iot', iotRouter); // dispositivos: usan la clave X-Dispositivo-Cla
 // Todas las rutas siguientes exigen sesión (RNF-08)
 app.use('/api/notificaciones', requiereSesion, notificacionesRouter);
 app.use('/api/dispositivos', requiereSesion, dispositivosRouter);
+app.use('/api/ambiente', requiereSesion, ambienteRouter);
 
 app.use('/api', (req, res) => res.status(404).json({ error: 'Ruta no encontrada' }));
 app.use(manejarErrores);

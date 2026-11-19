@@ -46,6 +46,32 @@ export async function marcarTokenUsado(token) {
   if (error) throw error;
 }
 
+// ---- Invitaciones (HU-PLA-08): enlace de un solo uso que vence a las 24 h ----
+export const PREFIJO_INVITACION = 'inv_';
+
+/** Crea una invitación al ambiente. Devuelve { token, expira_en }. */
+export async function crearInvitacion(ambienteId) {
+  const token = crypto.randomBytes(16).toString('hex');
+  const expira_en = new Date(Date.now() + VIGENCIA_HORAS * 3600 * 1000).toISOString();
+  const { error } = await supabase.from('tokens_telegram').insert({ token, tipo: 'invitacion', ambiente_id: ambienteId, expira_en });
+  if (error) throw error;
+  return { token, expira_en };
+}
+
+/** Invitaciones del ambiente que todavía se pueden usar (sin usar y sin vencer). */
+export async function invitacionesPendientes(ambienteId) {
+  const { data, error } = await supabase
+    .from('tokens_telegram')
+    .select('token, expira_en, creado_en')
+    .eq('tipo', 'invitacion')
+    .eq('ambiente_id', ambienteId)
+    .eq('usado', false)
+    .gt('expira_en', new Date().toISOString())
+    .order('creado_en', { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
 export function enlaceBot(parametro) {
   return `https://t.me/${config.telegramUsername}?start=${parametro}`;
 }

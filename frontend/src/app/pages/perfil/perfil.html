@@ -30,6 +30,16 @@
   }
 
   <section class="tarjeta-seccion">
+    <h2>👪 Perfiles del ambiente</h2>
+    <app-perfiles-ambiente />
+  </section>
+
+  <section class="tarjeta-seccion">
+    <h2>✉️ Invitar a un familiar</h2>
+    <app-invitar-perfil />
+  </section>
+
+  <section class="tarjeta-seccion">
     <h2>Notificaciones</h2>
     <p>Envía un mensaje de prueba por Telegram a todos los perfiles verificados del ambiente.</p>
     <button class="boton secundario" type="button" (click)="enviarPrueba()" [disabled]="enviando()">

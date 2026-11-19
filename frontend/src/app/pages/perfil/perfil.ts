@@ -1,5 +1,5 @@
 // Perfil: gestión de la cuenta (HU-PLA-07) y notificación de prueba (HU-TRN-03).
-// Invitaciones y lista de perfiles: HU-PLA-08/09.
+// Lista de perfiles e invitaciones: HU-PLA-08.
 import { Component, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
@@ -7,10 +7,12 @@ import { AuthService } from '../../core/auth.service';
 import { Encabezado } from '../../shared/encabezado';
 import { DatosCuenta } from './datos-cuenta';
 import { CambiarPassword } from './cambiar-password';
+import { PerfilesAmbiente } from './perfiles-ambiente';
+import { InvitarPerfil } from './invitar-perfil';
 
 @Component({
   selector: 'app-perfil',
-  imports: [RouterLink, Encabezado, DatosCuenta, CambiarPassword],
+  imports: [RouterLink, Encabezado, DatosCuenta, CambiarPassword, PerfilesAmbiente, InvitarPerfil],
   templateUrl: './perfil.html',
   styleUrl: './perfil.css',
 })
