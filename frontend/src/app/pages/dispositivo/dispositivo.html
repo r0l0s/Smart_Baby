@@ -62,8 +62,8 @@
     }
 
     <section class="tarjeta-seccion">
-      <h2>Historial de eventos</h2>
-      <app-historial-eventos [dispositivoId]="d.id" />
+      <h2>{{ d.tipo === 'colchon' ? 'Historial del colchón' : 'Historial de eventos' }}</h2>
+      <app-historial-eventos [dispositivoId]="d.id" [filtros]="filtrosHistorial[d.tipo] ?? []" [ordenInicial]="d.tipo === 'colchon' ? 'asc' : 'desc'" />
     </section>
 
     @if (auth.usuario()?.rol === 'principal') {

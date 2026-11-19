@@ -317,19 +317,32 @@ router.get('/:id/lecturas', async (req, res, next) => {
   }
 });
 
-// GET /api/dispositivos/:id/eventos?limite=50 — últimos eventos, el más reciente primero (HU-TRN-01)
+// GET /api/dispositivos/:id/eventos — historial de eventos (HU-TRN-01, HU-COL-04, HU-SEG-04)
+//   ?limite=50            cuántos devolver (máx. 500)
+//   ?tipos=a,b            solo esos tipos de evento
+//   ?orden=asc|desc       asc = cronológico (más antiguo primero); desc = más reciente primero (por defecto)
+// El total de eventos (con el filtro) va en el encabezado X-Total.
 router.get('/:id/eventos', async (req, res, next) => {
   try {
     const d = await dispositivoDelAmbiente(req, res);
     if (!d) return;
     const limite = Math.min(Number(req.query.limite) || 50, 500);
-    const { data, error } = await supabase
+    const ascendente = req.query.orden === 'asc';
+    let consulta = supabase
       .from('eventos')
-      .select('id, tipo, detalle, foto_url, registrado_en')
+      .select('id, tipo, detalle, foto_url, registrado_en', { count: 'exact' })
       .eq('dispositivo_id', d.id)
-      .order('registrado_en', { ascending: false })
+      .order('registrado_en', { ascending: ascendente })
+      .order('id', { ascending: ascendente }) // desempate si dos eventos tienen la misma hora
       .limit(limite);
+    const tipos = String(req.query.tipos || '')
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean);
+    if (tipos.length) consulta = consulta.in('tipo', tipos);
+    const { data, error, count } = await consulta;
     if (error) throw error;
+    res.set('X-Total', String(count ?? data.length));
     res.json(data);
   } catch (err) {
     next(err);
